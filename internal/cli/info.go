@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/YoonShinWoong/fleet/internal/config"
@@ -21,18 +22,29 @@ func runInfo(_ []string) error {
 	}
 	fmt.Println("\nreachable at")
 	fmt.Printf("  this machine   http://127.0.0.1:%s\n", port)
-	if ip := firstOutput("tailscale", "ip", "-4"); ip != "" {
-		fmt.Printf("  tailscale      http://%s:%s\n", ip, port)
-	} else if ip := firstOutput("/Applications/Tailscale.app/Contents/MacOS/Tailscale", "ip", "-4"); ip != "" {
-		fmt.Printf("  tailscale      http://%s:%s\n", ip, port)
+	if host := firstOutput("scutil", "--get", "LocalHostName"); host != "" {
+		fmt.Printf("  same wifi      http://%s.local:%s\n", host, port)
 	}
 	for _, ifc := range []string{"en0", "en1"} {
 		if ip := firstOutput("ipconfig", "getifaddr", ifc); ip != "" {
 			fmt.Printf("  lan (%s)      http://%s:%s\n", ifc, ip, port)
 		}
 	}
+	ts := "tailscale"
+	if _, err := exec.LookPath(ts); err != nil {
+		ts = "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+	}
+	if ip := firstOutput(ts, "ip", "-4"); ip != "" {
+		fmt.Printf("  tailscale      http://%s:%s\n", ip, port)
+		if dns := firstOutput("sh", "-c", ts+" status --json | sed -n 's/.*\"DNSName\": *\"\\([^\"]*\\)\\.\".*/\\1/p' | head -1"); dns != "" {
+			fmt.Printf("  tailscale dns  http://%s:%s\n", dns, port)
+			fmt.Printf("\nHTTPS inside your tailnet (recommended for phones): run once on this machine\n  %s serve --bg %s\nthen use https://%s/ everywhere; fleet can stay bound to loopback.\n", filepathBase(ts), port, dns)
+		}
+	} else {
+		fmt.Println("\nNo tailscale found. For other networks install it on every device: https://tailscale.com/download")
+	}
 	if strings.HasPrefix(cfg.Addr, "127.") || strings.HasPrefix(cfg.Addr, "localhost") {
-		fmt.Println("\nOnly loopback is bound. For other devices set \"addr\" to \"0.0.0.0:" + port + "\" (or the tailscale ip) in config and restart.")
+		fmt.Println("\nOnly loopback is bound. Without tailscale serve, set \"addr\" to \"0.0.0.0:" + port + "\" in config and restart to accept other devices.")
 	}
 	fmt.Printf("\non another mac\n  export FLEET_ADDR=<host>:%s FLEET_TOKEN=%s\n", port, cfg.Token)
 	return nil
@@ -46,3 +58,5 @@ func firstOutput(name string, args ...string) string {
 	line, _, _ := strings.Cut(strings.TrimSpace(string(out)), "\n")
 	return strings.TrimSpace(line)
 }
+
+func filepathBase(p string) string { return filepath.Base(p) }

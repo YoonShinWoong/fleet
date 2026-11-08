@@ -208,3 +208,28 @@ func TestSearchScrollback(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodDelete, ts.URL+"/v1/terms/s1", nil)
 	_, _ = http.DefaultClient.Do(req)
 }
+
+func TestAuthBehindLocalProxy(t *testing.T) {
+	t.Setenv("FLEET_HOME", t.TempDir())
+	cfg := config.Default()
+	cfg.Token = "secret"
+	store, _ := state.Open(filepath.Join(t.TempDir(), "state.json"))
+	s, err := New(cfg, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/v1/terms", nil)
+	req.RemoteAddr = "127.0.0.1:5555"
+	req.Header.Set("X-Forwarded-For", "100.64.0.9")
+	s.srv.Handler.ServeHTTP(rec, req)
+	if rec.Code != 401 {
+		t.Fatalf("proxied request without token: %d", rec.Code)
+	}
+	req.Header.Set("Authorization", "Bearer secret")
+	rec = httptest.NewRecorder()
+	s.srv.Handler.ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatalf("proxied request with token: %d", rec.Code)
+	}
+}

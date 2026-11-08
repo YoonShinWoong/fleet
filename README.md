@@ -90,17 +90,31 @@ To reach it from other devices, set `"addr"` in `~/.fleet/config.json` to `"0.0.
 
 `fleet hooks install` adds a `fleet hook` entry to each event in `~/.claude/settings.json` and `~/.codex/hooks.json` without touching the hooks you already have, and leaves a `.bak-fleet` next to each file. Codex asks you once to trust the new hooks. fleet always answers `{}`, so agent behavior never changes, and if the daemon is down the hook gives up quietly within 1.5 seconds.
 
+### Reaching it from elsewhere
+
+Same Wi-Fi: `fleet info` prints a `http://<name>.local:7677` address that works from the other Mac and the phone, as long as `addr` is `0.0.0.0:7677`.
+
+Any network: install [Tailscale](https://tailscale.com/download) on the host, the other Mac and the phone, sign in with one account, then on the host run once:
+
+```sh
+tailscale serve --bg 7677
+```
+
+That publishes fleet as `https://<host>.<tailnet>.ts.net/`, visible only inside your tailnet, with a real certificate. fleet can stay bound to loopback; requests arriving through the proxy still need the token. HTTPS also unlocks browser notifications and home-screen install on the phone.
+
 ### Another Mac
 
 ```sh
-export FLEET_ADDR=100.x.y.z:7677 FLEET_TOKEN=<token from fleet info>
+export FLEET_ADDR=https://<host>.<tailnet>.ts.net FLEET_TOKEN=<token from fleet info>
 fleet ls
 fleet attach fix-login-claude     # detach with Ctrl-\
 ```
 
+`FLEET_ADDR` also accepts a bare `host:port` for plain HTTP.
+
 ### Phone
 
-Open `http://100.x.y.z:7677` in Safari or Chrome, paste the token once, and add it to the home screen.
+Open `https://<host>.<tailnet>.ts.net/` (or the `.local` address on the same Wi-Fi) in Safari or Chrome, paste the token once, and add it to the home screen.
 
 ## Usage
 

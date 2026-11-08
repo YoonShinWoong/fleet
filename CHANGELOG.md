@@ -4,6 +4,15 @@
 
 ## Unreleased
 
+## v0.1.2 (2026-11-08)
+
+### Added
+- `fleet info`가 같은 와이파이용 `.local` 주소, Tailscale IP와 MagicDNS 이름, `tailscale serve` 안내를 보여준다.
+- README에 Tailscale 연결 절.
+
+### Fixed
+- `tailscale serve` 같은 로컬 리버스 프록시 뒤에서 온 요청(X-Forwarded-For)은 loopback으로 보지 않고 토큰을 요구한다.
+
 ## v0.1.1 (2026-11-08)
 
 ### Added

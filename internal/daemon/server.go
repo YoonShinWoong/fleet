@@ -169,7 +169,10 @@ func (s *Server) snapshot() Snapshot {
 // Authorization: Bearer or ?token= (EventSource and WebSocket cannot set headers).
 func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, "/v1/") || isLoopback(r.RemoteAddr) {
+		// A reverse proxy on this machine (tailscale serve, caddy) connects from
+		// loopback but forwards someone else, so a forwarded header means "remote".
+		local := isLoopback(r.RemoteAddr) && r.Header.Get("X-Forwarded-For") == "" && r.Header.Get("Tailscale-User-Login") == ""
+		if !strings.HasPrefix(r.URL.Path, "/v1/") || local {
 			next.ServeHTTP(w, r)
 			return
 		}
