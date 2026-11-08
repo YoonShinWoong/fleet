@@ -105,6 +105,23 @@ fleet handoff fix-login-claude -to codex -close      # 넘긴 뒤 이전 터미�
 
 데몬이 죽으면 그 안의 터미널도 죽는다. tmux도 같다.
 
+## 버전과 릴리스
+
+SemVer 태그로 관리한다. 변경은 `CHANGELOG.md`의 Unreleased 절에 적어두고, 릴리스할 때 버전 절로 옮긴 뒤 태그를 푸시한다.
+
+```sh
+git tag -a v0.2.0 -m "v0.2.0" && git push origin main v0.2.0
+```
+
+태그가 올라가면 GitHub Actions가 테스트를 돌리고 macOS(arm64, amd64)와 Linux(arm64, amd64) 바이너리를 빌드해 릴리스에 붙인다. 호스트에서는 릴리스 자산을 받기만 하면 된다.
+
+```sh
+gh release download -R YoonShinWoong/fleet -p fleet-darwin-arm64 -O ~/.local/bin/fleet
+chmod +x ~/.local/bin/fleet
+```
+
+main으로 가는 푸시와 PR은 `go vet`과 `go test`를 통과해야 한다.
+
 ## 라이선스
 
 MIT. [LICENSE](LICENSE) 참고.

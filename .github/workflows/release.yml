@@ -1,0 +1,36 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test ./...
+      - name: build binaries
+        run: |
+          mkdir -p dist
+          for t in darwin/arm64 darwin/amd64 linux/arm64 linux/amd64; do
+            GOOS=${t%/*} GOARCH=${t#*/} CGO_ENABLED=0 go build -trimpath \
+              -ldflags "-s -w -X github.com/YoonShinWoong/fleet/internal/version.Version=${GITHUB_REF_NAME}" \
+              -o "dist/fleet-${t%/*}-${t#*/}" ./cmd/fleet
+          done
+          (cd dist && shasum -a 256 fleet-* > SHA256SUMS)
+      - name: create release from CHANGELOG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes=$(awk -v v="$GITHUB_REF_NAME" '$0 ~ "^## "v"( |$)"{f=1; next} /^## /{f=0} f' CHANGELOG.md)
+          if [ -n "$notes" ]; then
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes" dist/*
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes dist/*
+          fi
