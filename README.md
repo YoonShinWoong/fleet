@@ -63,7 +63,13 @@ tmux has the right idea. A session that outlives the client. But it stops at the
   <p><img src="assets/mobile.png" alt="Two phone screens: the terminal list, and two terminals stacked with a back button" width="700"></p>
 
 - **Light.**<br>
-  A single Go binary around 10 MB with the web app embedded. The host needs nothing else: no Node, no tmux, no browser engine. Everything in `~/.fleet`.
+  A single Go binary around 10 MB with the web app embedded. With 20 idle terminals the daemon sits at 12 MB of RSS and uses no measurable CPU over a minute (0 s of CPU time at `ps`'s one-second resolution, with or without a client attached). The host needs nothing else: no Node, no tmux, no browser engine. Everything lives in `~/.fleet`.
+
+- **Comes back after a restart.**<br>
+  Every 30 seconds, on every change and on shutdown, the daemon writes what each terminal is to `~/.fleet/terminals.json`. On the next start, agent terminals come back on the same session (`claude --resume <id>`, `codex resume <id>`, using the id their hooks reported), and shells come back fresh with their last 200 lines shown above the prompt. `fleet service restart` or a reboot no longer loses your conversations.
+
+- **Any agent can report its state.**<br>
+  Besides the Claude Code and Codex hooks, fleet understands the OSC 7501 convention lmux introduced: a program that prints `\e]7501;state=blocked:app=my-agent\e\\` gets the same badge and toast. `state=` is `working`, `blocked` (with `kind=permission|question|auth`), `done`, `error`, `idle` or `clear`.
 
 ## Installation
 
@@ -163,7 +169,7 @@ In the browser:
 - **The attach protocol** is one WebSocket per pane: binary frames are PTY bytes in both directions, text frames are JSON control (`resize` in, `exit` out). The CLI and the browser speak the same protocol, so a native client is a small job.
 - **Status** comes from hooks. `SessionStart` → idle, `UserPromptSubmit` and tool events → working, `PermissionRequest` / `Notification` → needs input, `Stop` → idle, `SessionEnd` → ended. Unknown events and fields are ignored, so hook schema changes on either side do not break ingestion.
 - **Notifications** are made by the client from status transitions, not by the server, because which transitions deserve a ping is a matter of taste.
-- **Workspaces** persist in `~/.fleet/workspaces.json`. Terminals do not survive a daemon restart, same as tmux.
+- **Workspaces** persist in `~/.fleet/workspaces.json`; terminals persist in `~/.fleet/terminals.json` and are recreated on start, agents on their previous session.
 
 The longer version, including what was deliberately left out and why, is in [docs/DESIGN.md](docs/DESIGN.md) (Korean).
 
@@ -181,6 +187,7 @@ The longer version, including what was deliberately left out and why, is in [doc
 | `agents.<name>.modelFlag` | flag used to pass a model at launch | `--model`, `-m` |
 | `agents.<name>.models` | suggestions in the model pickers | claude: `fable opus sonnet haiku` |
 | `agents.<name>.modelCommand` | typed into a running session to switch model; `{model}` is substituted | `/model {model}`, `/model` |
+| `agents.<name>.resumeCommand` | how to bring the agent back on a session after a daemon restart; `{session}` is the id from its hooks | `claude --remote-control --resume {session}`, `codex resume {session}` |
 | `handoffPrompt` | first prompt for the agent receiving a handoff; `{from}` `{to}` `{file}` | see config |
 | `scrollbackBytes` | raw scrollback kept per terminal | `1048576` |
 
@@ -188,15 +195,15 @@ Any command works as an agent. Add `"aider": {"command": "aider"}` and it shows 
 
 ## Roadmap
 
-- **v0.2** One MCP registry rendered into Claude's user scope, Codex's `config.toml` and per-repo `.mcp.json`, with per-host `doctor` that disables servers you cannot reach. One memory bundle both agents read.
-- **v0.3** Push notifications to a phone that has the app closed, PWA install polish, and a virtual terminal parser so re-attaching to a TUI shows a clean screen instead of a replay.
-- **v0.4** An MCP proxy so each MCP server runs once per machine instead of once per session, and a nightly distiller that proposes memory entries from both agents' transcripts.
+- **v0.3** One MCP registry rendered into Claude's user scope, Codex's `config.toml` and per-repo `.mcp.json`, with a per-host `doctor` that disables servers you cannot reach. One memory bundle both agents read.
+- **v0.4** Push notifications to a phone that has the app closed, PWA install polish, and a virtual terminal parser so re-attaching to a TUI shows a clean screen instead of a replay.
+- **v0.5** An MCP proxy so each MCP server runs once per machine instead of once per session, and a nightly distiller that proposes memory entries from both agents' transcripts.
 
 ## Status
 
 Early, and used daily by one person. Things to know:
 
-- Terminals die with the daemon. Hooks and workspaces survive.
+- A daemon restart brings agents back on their last session only if their hooks are installed (that is where the session id comes from); without hooks they restart fresh.
 - Scrollback replay is raw bytes; full-screen TUIs rely on the resize nudge to repaint.
 - Codex's `Notification` hook is partial upstream, so *needs input* for Codex can lag a turn.
 - There is no auth beyond the token. Keep the daemon inside a private network.

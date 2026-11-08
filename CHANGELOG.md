@@ -4,6 +4,17 @@
 
 ## Unreleased
 
+## v0.2.0 (2026-11-08)
+
+### Added
+- 데몬 재시작 뒤 터미널 복구. `~/.fleet/terminals.json`에 30초마다, 변경 때마다, 종료 때 저장하고, 시작할 때 다시 만든다. 에이전트는 훅이 보고한 세션 id로 `resumeCommand`(`claude --remote-control --resume {session}`, `codex resume {session}`)를 실행하고, 셸은 마지막 출력 200줄을 스크롤백에 깔아 둔다. SIGTERM을 받으면 저장 후 자식에 SIGHUP.
+- OSC 7501 상태 보고. 어떤 프로그램이든 `\e]7501;state=blocked:app=my-agent\e\\`를 출력하면 훅과 같은 상태, 배지, 알림을 받는다. lmux가 정의한 규약과 호환.
+- 목록에 "복구됨" 표시.
+- README에 유휴 측정치. 터미널 20개, 데몬 RSS 12MB, 1분간 측정 가능한 CPU 사용 없음.
+
+### Changed
+- 로드맵 번호를 한 칸씩 미룸. MCP 레지스트리와 메모리 번들은 v0.3.
+
 ## v0.1.2 (2026-11-08)
 
 ### Added
