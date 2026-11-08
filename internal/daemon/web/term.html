@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="color-scheme" content="dark">
+<title>fleet</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
+<link rel="stylesheet" href="app.css">
+<style>
+  html, body { height: 100%; overflow: hidden; background: #000; }
+  body { display: flex; flex-direction: column; padding: 0; }
+  #bar { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #111; font-size: 13px; }
+  #bar a { color: #9ca3af; text-decoration: none; }
+  #bar .name { font-weight: 600; flex: 1; }
+  #xterm { flex: 1; min-height: 0; padding: 4px; }
+  #keys { display: flex; gap: 4px; padding: 6px; background: #111; overflow-x: auto; }
+  #keys button { flex: none; min-width: 44px; padding: 8px 10px; background: #1f2937; border: 0; color: #e5e7eb; border-radius: 6px; font-size: 13px; }
+  #keys button.on { background: #2563eb; }
+</style>
+</head>
+<body>
+<div id="bar"><a href="./">‹ fleet</a><span class="name" id="name"></span><span id="state" class="chip">connecting</span></div>
+<div id="xterm"></div>
+<div id="keys">
+  <button data-seq="\u001b">esc</button>
+  <button data-seq="\t">tab</button>
+  <button id="ctrl">ctrl</button>
+  <button data-seq="\u0003">^C</button>
+  <button data-seq="\u001b[A">↑</button>
+  <button data-seq="\u001b[B">↓</button>
+  <button data-seq="\u001b[D">←</button>
+  <button data-seq="\u001b[C">→</button>
+  <button data-seq="\r">enter</button>
+  <button data-seq="y\r">y⏎</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js"></script>
+<script src="common.js"></script>
+<script src="term.js"></script>
+</body>
+</html>
