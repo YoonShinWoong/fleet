@@ -1,0 +1,22 @@
+# MCP 서버 정의 한 벌. v0.2의 `fleet mcp render`가 이 파일에서
+# Claude user scope(~/.claude.json), Codex config.toml [mcp_servers], 레포 .mcp.json 을 생성한다.
+# 실제 목록은 레포 밖 ~/.fleet/mcp.yaml 에 두고, 이 파일은 형식 예시다.
+#
+# tags
+#   public    어디서든 닿는 SaaS 엔드포인트
+#   intranet  사내망 전용. doctor가 이 호스트에서 호스트명이 안 풀리면 끈다
+#   local     이 머신에서 프로세스로 띄우는 stdio 서버
+#   slow      npx -y 로 매번 받는 서버. 전역 설치로 바꿀 후보
+# targets   비우면 claude 와 codex 둘 다
+# scope     user(기본) 또는 repo. repo 면 repos 에 적힌 레포의 .mcp.json 으로 간다
+
+servers:
+  linear:        { type: http, url: https://mcp.linear.app/mcp, tags: [public] }
+  slack:         { type: http, url: https://mcp.slack.com/mcp, tags: [public] }
+  internal-api:  { type: http, url: https://mcp.internal.example.com/mcp, tags: [intranet] }
+  grafana:       { type: stdio, command: ~/go/bin/mcp-grafana, tags: [local] }
+  notes:         { type: stdio, command: npx, args: [-y, some-notes-mcp, "~/Documents/notes"], tags: [local, slow] }
+  playwright:    { type: stdio, command: npx, args: [-y, "@playwright/mcp@latest"], tags: [local, slow], scope: repo, repos: [myapp] }
+
+repos:
+  myapp: ~/src/myapp
