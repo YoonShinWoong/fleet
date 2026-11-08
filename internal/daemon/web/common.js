@@ -1,5 +1,7 @@
 // Shared by index and term pages: token handling and an authed fetch.
 const TOKEN_KEY = 'fleet.token';
+// A native shell can hand the token over once as ?token=...; keep it and hide it from the URL.
+try { const u = new URL(location.href); const qt = u.searchParams.get('token'); if (qt) { localStorage.setItem(TOKEN_KEY, qt); u.searchParams.delete('token'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); } } catch {}
 function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } }
 function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch {} }
 function withToken(url) {

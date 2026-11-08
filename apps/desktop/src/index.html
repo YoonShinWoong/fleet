@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark light">
+<title>fleet</title>
+<style>
+  :root { color-scheme: dark light; --bg:#0f1115; --card:#181b22; --fg:#e6e6e6; --mute:#8a8f98; --line:#262a33; --accent:#3b82f6; --err:#ef4444; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f6f7f9; --card:#fff; --fg:#111; --mute:#666; --line:#e3e5ea; } }
+  html, body { height:100%; margin:0; }
+  body { background:var(--bg); color:var(--fg); font:15px/1.45 -apple-system, system-ui, sans-serif; display:flex; align-items:center; justify-content:center; -webkit-user-select:none; }
+  main { width:min(420px, 92vw); background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px; }
+  h1 { margin:0 0 4px; font-size:22px; letter-spacing:.04em; display:flex; align-items:center; gap:10px; }
+  p { margin:0 0 20px; color:var(--mute); font-size:13px; }
+  label { display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--mute); margin-bottom:14px; }
+  input { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; -webkit-user-select:text; }
+  button { font:inherit; width:100%; padding:11px; border-radius:10px; border:0; background:var(--accent); color:#fff; cursor:pointer; }
+  .err { color:var(--err); font-size:13px; min-height:18px; margin-top:10px; }
+  .hint { margin-top:18px; font-size:12px; color:var(--mute); }
+  code { background:var(--line); border-radius:4px; padding:1px 5px; }
+</style>
+</head>
+<body>
+<main>
+  <h1><svg width="26" height="26" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#0f1115"/><rect x="24" y="30" width="80" height="12" rx="6" fill="#3b82f6"/><rect x="24" y="58" width="56" height="12" rx="6" fill="#f59e0b"/><rect x="24" y="86" width="68" height="12" rx="6" fill="#22c55e"/></svg> fleet</h1>
+  <p>Connect to the Mac that runs <code>fleet daemon</code>.</p>
+  <form id="f">
+    <label>Host <input name="host" placeholder="https://main.tailnet.ts.net  or  192.168.0.10:7677" autocomplete="off" spellcheck="false" required></label>
+    <label>Token <input name="token" type="password" placeholder="from `fleet info` on the host" autocomplete="off"></label>
+    <button>Connect</button>
+    <div class="err" id="err"></div>
+  </form>
+  <div class="hint">⌥⌘F shows this window from anywhere. The menu bar icon counts agents waiting for you.</div>
+</main>
+<script>
+  const { invoke } = window.__TAURI__.core;
+  const f = document.getElementById('f'), err = document.getElementById('err');
+  invoke('saved').then(c => { if (c) { f.host.value = c.host || ''; f.token.value = c.token || ''; } }).catch(() => {});
+  f.addEventListener('submit', async e => {
+    e.preventDefault(); err.textContent = '';
+    try { await invoke('connect', { host: f.host.value, token: f.token.value }); }
+    catch (x) { err.textContent = String(x); }
+  });
+</script>
+</body>
+</html>

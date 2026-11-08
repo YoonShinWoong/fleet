@@ -310,7 +310,15 @@ function restoreLayout() {
   }
   if (!panes.length && !mobile()) { const r = rows.find(x => x.alive); if (r) addPane(r.name); }
   mobileShow = false; layout();
+  if (location.hash === '#waiting') { history.replaceState(null, '', location.pathname); jumpWaiting(); }
 }
+function jumpWaiting() {
+  const cur = focusedPane()?.name;
+  const waiting = rows.filter(r => r.status === 'needs_input');
+  const next = waiting.find(r => r.name !== cur) || waiting[0];
+  if (next) openIn(focusedPane(), next.name); else toast(t('notify.none'), false);
+}
+window.addEventListener('hashchange', () => { if (location.hash === '#waiting') { history.replaceState(null, '', location.pathname); jumpWaiting(); } });
 
 /* ---------- terminal transport ---------- */
 function connect(p) {
@@ -429,13 +437,7 @@ function handleShortcut(e) {
   if (!e.altKey || e.ctrlKey || e.metaKey) return false;
   const code = e.code;
   if (/^Digit[1-9]$/.test(code)) { const r = shortcutRows[+code.slice(5) - 1]; if (r) openIn(focusedPane(), r.name); e.preventDefault(); return true; }
-  if (code === 'KeyN') {
-    const cur = focusedPane()?.name;
-    const waiting = rows.filter(r => r.status === 'needs_input');
-    const next = waiting.find(r => r.name !== cur) || waiting[0];
-    if (next) openIn(focusedPane(), next.name); else toast(t('notify.none'), false);
-    e.preventDefault(); return true;
-  }
+  if (code === 'KeyN') { jumpWaiting(); e.preventDefault(); return true; }
   if (code === 'KeyS') { addPane(null); e.preventDefault(); return true; }
   if (code === 'KeyW') { const p = focusedPane(); if (p) closePane(p); e.preventDefault(); return true; }
   if (code === 'KeyM') { const p = focusedPane(); if (p) p.el.classList.toggle('max'); e.preventDefault(); return true; }

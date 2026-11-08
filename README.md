@@ -62,6 +62,9 @@ tmux has the right idea. A session that outlives the client. But it stops at the
 
   <p><img src="assets/mobile.png" alt="Two phone screens: the terminal list, and two terminals stacked with a back button" width="700"></p>
 
+- **A menu bar app for the Mac you sit at.**<br>
+  `fleet.app` (Tauri, 6 MB) wraps the same web app in a native window and adds what a browser tab cannot: a menu bar count of agents waiting for you, a Dock badge, notifications while the window is hidden, `⌥⌘F` from anywhere, and a remembered host and token. Mobile stays on the web app.
+
 - **Light.**<br>
   A single Go binary around 10 MB with the web app embedded. With 20 idle terminals the daemon sits at 12 MB of RSS and uses no measurable CPU over a minute (0 s of CPU time at `ps`'s one-second resolution, with or without a client attached). The host needs nothing else: no Node, no tmux, no browser engine. Everything lives in `~/.fleet`.
 
@@ -107,6 +110,10 @@ tailscale serve --bg 7677
 ```
 
 That publishes fleet as `https://<host>.<tailnet>.ts.net/`, visible only inside your tailnet, with a real certificate. fleet can stay bound to loopback; requests arriving through the proxy still need the token. HTTPS also unlocks browser notifications and home-screen install on the phone.
+
+### The desktop app (macOS)
+
+Download `fleet-desktop-*.dmg` from [Releases](https://github.com/YoonShinWoong/fleet/releases/latest), drag `fleet.app` to Applications, and on first launch enter the host and token from `fleet info`. The app is not notarized yet, so the first open needs a right-click → Open. Closing the window keeps it in the menu bar; quit from there. To build it yourself, see [apps/desktop](apps/desktop/README.md).
 
 ### Another Mac
 
@@ -195,9 +202,9 @@ Any command works as an agent. Add `"aider": {"command": "aider"}` and it shows 
 
 ## Roadmap
 
-- **v0.3** One MCP registry rendered into Claude's user scope, Codex's `config.toml` and per-repo `.mcp.json`, with a per-host `doctor` that disables servers you cannot reach. One memory bundle both agents read.
-- **v0.4** Push notifications to a phone that has the app closed, PWA install polish, and a virtual terminal parser so re-attaching to a TUI shows a clean screen instead of a replay.
-- **v0.5** An MCP proxy so each MCP server runs once per machine instead of once per session, and a nightly distiller that proposes memory entries from both agents' transcripts.
+- **Next.** One MCP registry rendered into Claude's user scope, Codex's `config.toml` and per-repo `.mcp.json`, with a per-host `doctor` that disables servers you cannot reach. One memory bundle both agents read.
+- **Then.** Push notifications to a phone that has the app closed, PWA install polish, and a virtual terminal parser so re-attaching to a TUI shows a clean screen instead of a replay. Signed and notarized desktop builds.
+- **Later.** An MCP proxy so each MCP server runs once per machine instead of once per session, and a nightly distiller that proposes memory entries from both agents' transcripts.
 
 ## Status
 

@@ -1,3 +1,7 @@
 bin/
 .DS_Store
 dist/
+apps/desktop/node_modules/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/icon-src.png
