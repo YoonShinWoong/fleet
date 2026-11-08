@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## v0.1.1 (2026-11-08)
+
 ### Added
 - 웹 앱 UI가 영어 기본, 브라우저 언어가 한국어면 한국어. `localStorage.fleet.lang`으로 고정 가능.
 - 영어 README와 스크린샷, 구조 다이어그램. 한국어 README는 `README.ko.md`.
