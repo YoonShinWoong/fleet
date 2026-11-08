@@ -17,14 +17,14 @@
 
 <p align="center">
   <a href="https://github.com/YoonShinWoong/fleet/releases/latest"><img src="https://img.shields.io/github/v/release/YoonShinWoong/fleet?label=release&color=3b82f6" alt="latest release"></a>
-  <a href="https://github.com/YoonShinWoong/fleet/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/YoonShinWoong/fleet/ci.yml?branch=main&label=ci" alt="ci"></a>
+  <a href="https://github.com/YoonShinWoong/fleet/actions/workflows/ci.yml"><img src="https://github.com/YoonShinWoong/fleet/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
   <img src="https://img.shields.io/badge/go-single%20binary-00ADD8?logo=go&logoColor=white" alt="Go, single binary">
   <img src="https://img.shields.io/badge/macOS%20%7C%20Linux-host-2E3440?logo=apple&logoColor=white" alt="macOS or Linux host">
   <img src="https://img.shields.io/badge/license-MIT-22c55e" alt="MIT">
 </p>
 
 <p align="center">
-  <code>curl -L https://github.com/YoonShinWoong/fleet/releases/latest/download/fleet-darwin-arm64 -o ~/.local/bin/fleet && chmod +x ~/.local/bin/fleet</code>
+  <code>go install github.com/YoonShinWoong/fleet/cmd/fleet@latest</code> · or a single binary from <a href="https://github.com/YoonShinWoong/fleet/releases/latest">Releases</a>
 </p>
 
 <p align="center">
