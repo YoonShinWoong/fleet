@@ -14,6 +14,9 @@ type Agent struct {
 	ModelFlag    string   `json:"modelFlag,omitempty"`    // appended as "<flag> <model>" at launch, e.g. --model or -m
 	Models       []string `json:"models,omitempty"`       // suggestions for pickers; any string is accepted
 	ModelCommand string   `json:"modelCommand,omitempty"` // typed into a running session; {model} is substituted
+	// ResumeCommand restarts the agent on a session after the daemon restarts; {session} is the
+	// session id the agent reported through its hooks.
+	ResumeCommand string `json:"resumeCommand,omitempty"`
 }
 
 // Config is ~/.fleet/config.json. Missing keys fall back to Default().
@@ -36,8 +39,8 @@ func Default() *Config {
 		WorktreeRoot:    "~/fleet/worktrees",
 		Repos:           map[string]string{},
 		Agents: map[string]Agent{
-			"claude": {Command: "claude --remote-control", ModelFlag: "--model", Models: []string{"fable", "opus", "sonnet", "haiku"}, ModelCommand: "/model {model}"},
-			"codex":  {Command: "codex", ModelFlag: "-m", ModelCommand: "/model"},
+			"claude": {Command: "claude --remote-control", ModelFlag: "--model", Models: []string{"fable", "opus", "sonnet", "haiku"}, ModelCommand: "/model {model}", ResumeCommand: "claude --remote-control --resume {session}"},
+			"codex":  {Command: "codex", ModelFlag: "-m", ModelCommand: "/model", ResumeCommand: "codex resume {session}"},
 		},
 		HandoffPrompt: "이전 에이전트({from})에서 이어받은 작업이야. 먼저 {file} 을 읽고 맥락과 남은 일을 파악한 뒤 이어서 진행해. 시작할 때 네가 이해한 현재 상태를 한 문단으로 요약해줘.",
 	}
@@ -61,6 +64,9 @@ func (c *Config) backfill() {
 		if a.ModelCommand == "" {
 			a.ModelCommand = d.ModelCommand
 		}
+		if a.ResumeCommand == "" {
+			a.ResumeCommand = d.ResumeCommand
+		}
 		c.Agents[name] = a
 	}
 	if c.HandoffPrompt == "" {
@@ -80,6 +86,7 @@ func Dir() string {
 func Path() string           { return filepath.Join(Dir(), "config.json") }
 func StatePath() string      { return filepath.Join(Dir(), "state.json") }
 func WorkspacesPath() string { return filepath.Join(Dir(), "workspaces.json") }
+func TerminalsPath() string  { return filepath.Join(Dir(), "terminals.json") }
 
 // Load reads config.json over the defaults. A missing file is not an error.
 func Load() (*Config, error) {

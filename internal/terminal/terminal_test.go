@@ -2,6 +2,7 @@ package terminal
 
 import (
 	"bytes"
+	"sync"
 	"testing"
 	"time"
 )
@@ -71,4 +72,34 @@ func TestSmallestClientWins(t *testing.T) {
 		t.Fatalf("size after detach %+v", sz)
 	}
 	a.Close()
+}
+
+func TestOSC7501AndPreload(t *testing.T) {
+	var got []OSCState
+	var mu sync.Mutex
+	m := NewManager(4096, nil)
+	m.OnOSC = func(s OSCState) { mu.Lock(); got = append(got, s); mu.Unlock() }
+	term, err := m.Create(Options{Name: "osc", Command: `printf 'hello\033]7501;state=blocked:kind=question:app=my-agent\033\\world\n'; printf '\033]7501;state=done:app=my-agent\007'`, Shell: "/bin/sh", Preload: []byte("PREVIOUS\r\n")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		mu.Lock()
+		n := len(got)
+		mu.Unlock()
+		if n >= 2 {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(got) != 2 || got[0].State != "blocked" || got[0].App != "my-agent" || got[0].Attrs["kind"] != "question" || got[1].State != "done" {
+		t.Fatalf("osc reports: %+v", got)
+	}
+	if sb := term.Scrollback(); !bytes.HasPrefix(sb, []byte("PREVIOUS")) || !bytes.Contains(sb, []byte("hello")) {
+		t.Fatalf("scrollback: %q", sb)
+	}
+	_ = m.Kill("osc")
 }

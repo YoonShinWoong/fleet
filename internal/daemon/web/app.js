@@ -45,7 +45,7 @@ function computeRows() {
     const cmd = (t.command || '').split(' ')[0].split('/').pop();
     const last = s && t.alive ? (s.status !== 'working' && s.lastMessage ? s.lastMessage : (s.lastTool || '')) : (t.alive ? `${cmd}${quiet > 5 ? ` · quiet ${age(t.lastOutputAt)}` : ''}` : `exit ${t.exitCode}`);
     return { name: t.name, agent: s ? s.agent : (t.agent || ''), status, last, clients: t.clients, sub: s ? s.subagents : 0,
-      at: s && t.alive ? s.updatedAt : t.startedAt, alive: t.alive, exitCode: t.exitCode, cwd: t.cwd, repo: t.repo || '', workspace: t.workspace || '', model: (s && s.model) || t.model || '' };
+      at: s && t.alive ? s.updatedAt : t.startedAt, alive: t.alive, exitCode: t.exitCode, cwd: t.cwd, repo: t.repo || '', workspace: t.workspace || '', model: (s && s.model) || t.model || '', restored: !!t.restored };
   });
   return out.sort((a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9) || new Date(b.at) - new Date(a.at));
 }
@@ -100,7 +100,7 @@ function renderList() {
         <div class="col">
           <div class="l1"><span class="name">${esc(r.name)}</span>${r.agent ? `<span class="agent">${esc(r.agent)}</span>` : ''}${r.model ? `<span class="model">${esc(r.model)}</span>` : ''}<span class="age">${age(r.at)}</span></div>
           <div class="l2">${esc(r.last || GROUP[r.status] || r.status)}${r.sub ? ` · ${r.sub} sub` : ''}</div>
-          <div class="l3">${esc(GROUP[r.status] || r.status)}${r.clients ? ` · ${r.clients === 1 ? t('viewers1') : t('viewers', { n: r.clients })}` : ''}${n ? ` · <kbd>⌥${n}</kbd>` : ''}</div>
+          <div class="l3">${esc(GROUP[r.status] || r.status)}${r.restored ? ' · ' + t('item.restored') : ''}${r.clients ? ` · ${r.clients === 1 ? t('viewers1') : t('viewers', { n: r.clients })}` : ''}${n ? ` · <kbd>⌥${n}</kbd>` : ''}</div>
         </div>
         <div class="acts"><button data-act="split" title="${t('item.split')}">⫼</button><button data-act="kill" title="${t('item.kill')}">×</button></div>
       </div>`;

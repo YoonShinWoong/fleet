@@ -45,8 +45,9 @@ type Server struct {
 	launcher *launch.Launcher
 	srv      *http.Server
 
-	mu   sync.Mutex
-	subs map[chan struct{}]struct{}
+	mu           sync.Mutex
+	subs         map[chan struct{}]struct{}
+	persistTimer *time.Timer
 }
 
 // Snapshot is what live clients receive: every terminal and every agent session.
@@ -63,6 +64,7 @@ func New(cfg *config.Config, store *state.Store) (*Server, error) {
 	}
 	s := &Server{cfg: cfg, store: store, ws: ws, subs: map[chan struct{}]struct{}{}}
 	s.terms = terminal.NewManager(cfg.ScrollbackBytes, s.changed)
+	s.terms.OnOSC = s.onOSC
 	s.launcher = launch.New(cfg, s.terms, ws)
 	ch, _ := store.Subscribe()
 	go func() {
@@ -70,6 +72,8 @@ func New(cfg *config.Config, store *state.Store) (*Server, error) {
 			s.changed()
 		}
 	}()
+	s.restore()
+	go s.persistLoop()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.health)
@@ -140,13 +144,80 @@ func (s *Server) ListenAndServe() error {
 // changed wakes every SSE subscriber. Non-blocking: a slow viewer just coalesces.
 func (s *Server) changed() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	for ch := range s.subs {
 		select {
 		case ch <- struct{}{}:
 		default:
 		}
 	}
+	s.mu.Unlock()
+	s.schedulePersist()
+}
+
+// schedulePersist coalesces bursts of changes into one write two seconds later.
+func (s *Server) schedulePersist() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.persistTimer != nil {
+		s.persistTimer.Stop()
+	}
+	s.persistTimer = time.AfterFunc(2*time.Second, s.persist)
+}
+
+func (s *Server) persistLoop() {
+	t := time.NewTicker(30 * time.Second)
+	defer t.Stop()
+	for range t.C {
+		s.persist()
+	}
+}
+
+// onOSC turns an agent's OSC 7501 report into a session row for its terminal,
+// so any CLI that prints its state gets the same badge and toast as the hooks give.
+func (s *Server) onOSC(r terminal.OSCState) {
+	id := "osc:" + r.Term
+	if r.State == "clear" {
+		s.store.Update(id, func(sess *state.Session) {
+			sess.Status, sess.UpdatedAt, sess.LastEvent = state.StatusEnded, time.Now(), "osc:clear"
+		})
+		return
+	}
+	s.store.Update(id, func(sess *state.Session) {
+		now := time.Now()
+		if sess.StartedAt.IsZero() {
+			sess.StartedAt = now
+		}
+		sess.UpdatedAt, sess.Term, sess.Events = now, r.Term, sess.Events+1
+		if r.App != "" {
+			sess.Agent = r.App
+		} else if sess.Agent == "" {
+			sess.Agent = "agent"
+		}
+		sess.LastEvent = "osc:" + r.State
+		switch r.State {
+		case "working", "running":
+			sess.Status = state.StatusWorking
+		case "blocked", "waiting", "needs_input":
+			sess.Status = state.StatusNeedsInput
+			switch r.Attrs["kind"] {
+			case "permission":
+				sess.LastMessage = "needs permission"
+			case "question":
+				sess.LastMessage = "has a question"
+			case "auth":
+				sess.LastMessage = "needs you to sign in"
+			default:
+				sess.LastMessage = "needs you"
+			}
+		case "done", "idle", "finished":
+			sess.Status = state.StatusIdle
+		case "error", "failed":
+			sess.Status = state.StatusError
+		}
+		if m := r.Attrs["msg"]; m != "" {
+			sess.LastMessage = m
+		}
+	})
 }
 
 func (s *Server) subscribe() (chan struct{}, func()) {

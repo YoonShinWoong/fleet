@@ -233,3 +233,75 @@ func TestAuthBehindLocalProxy(t *testing.T) {
 		t.Fatalf("proxied request with token: %d", rec.Code)
 	}
 }
+
+func TestPersistAndRestore(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("FLEET_HOME", home)
+	cfg := config.Default()
+	cfg.Shell = "/bin/sh"
+	cfg.Agents["printer"] = config.Agent{Command: "printf 'fresh\n'", ResumeCommand: "printf 'resumed %s\n' {session}"}
+	store, _ := state.Open(filepath.Join(home, "state.json"))
+	s, err := New(cfg, store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(s.srv.Handler)
+	defer ts.Close()
+	// a shell with some output, and an agent terminal with a hook-bound session
+	http.Post(ts.URL+"/v1/terms", "application/json", strings.NewReader(`{"name":"sh1","command":"cat","cols":80,"rows":24}`))
+	http.Post(ts.URL+"/v1/terms/sh1/send", "application/json", strings.NewReader(`{"text":"remember-me"}`))
+	http.Post(ts.URL+"/v1/workspaces", "application/json", strings.NewReader(`{"name":"w","path":"`+home+`"}`))
+	http.Post(ts.URL+"/v1/terms", "application/json", strings.NewReader(`{"workspace":"w","agent":"printer","name":"w-printer"}`))
+	http.Post(ts.URL+"/v1/events/claude", "application/json", strings.NewReader(`{"context":{"term":"w-printer"},"payload":{"session_id":"sess-42","hook_event_name":"Stop"}}`))
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if tm, ok := s.terms.Get("sh1"); ok && strings.Contains(string(tm.Scrollback()), "remember-me") {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	s.Shutdown()
+
+	store2, _ := state.Open(filepath.Join(home, "state.json"))
+	s2, err := New(cfg, store2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s2.Shutdown()
+	sh, ok := s2.terms.Get("sh1")
+	if !ok || !sh.Info().Restored || !strings.Contains(string(sh.Scrollback()), "remember-me") {
+		t.Fatalf("shell not restored with its tail: ok=%v info=%+v", ok, sh.Info())
+	}
+	ag, ok := s2.terms.Get("w-printer")
+	if !ok || ag.Info().Agent != "printer" || ag.Info().Workspace != "w" {
+		t.Fatalf("agent terminal not restored: %+v", ag.Info())
+	}
+	deadline = time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) && !strings.Contains(string(ag.Scrollback()), "resumed sess-42") {
+		time.Sleep(20 * time.Millisecond)
+	}
+	if !strings.Contains(string(ag.Scrollback()), "resumed sess-42") {
+		t.Fatalf("agent was not resumed on its session: %q", ag.Scrollback())
+	}
+}
+
+func TestOSCStatusBecomesSession(t *testing.T) {
+	s, ts := newTestServer(t)
+	resp, _ := http.Post(ts.URL+"/v1/terms", "application/json", strings.NewReader(`{"name":"o1","command":"printf '\\033]7501;state=blocked:kind=permission:app=aider\\033\\\\'; sleep 2","cols":80,"rows":24}`))
+	if resp.StatusCode != 201 {
+		t.Fatalf("create: %v", resp.Status)
+	}
+	var sess state.Session
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if got, ok := s.store.Get("osc:o1"); ok {
+			sess = got
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if sess.Status != state.StatusNeedsInput || sess.Agent != "aider" || sess.Term != "o1" || sess.LastMessage != "needs permission" {
+		t.Fatalf("session from osc: %+v", sess)
+	}
+	_ = s.terms.Kill("o1")
+}

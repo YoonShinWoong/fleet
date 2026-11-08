@@ -47,6 +47,8 @@ type Info struct {
 	ExitedAt  *time.Time `json:"exitedAt,omitempty"`
 	// LastOutputAt lets clients show "quiet for 40s" for shells that have no hooks.
 	LastOutputAt time.Time `json:"lastOutputAt"`
+	// Restored is set on terminals the daemon recreated after a restart.
+	Restored bool `json:"restored,omitempty"`
 }
 
 type Options struct {
@@ -62,6 +64,36 @@ type Options struct {
 	Repo      string
 	Workspace string
 	Model     string
+	// Preload is placed in the scrollback before the process starts (used to
+	// show "previous output" after a restore); it is never written to the PTY.
+	Preload  []byte
+	Restored bool
+}
+
+// Persisted is what the daemon needs to recreate a terminal after a restart.
+type Persisted struct {
+	Name      string            `json:"name"`
+	Command   string            `json:"command"`
+	Cwd       string            `json:"cwd"`
+	Shell     string            `json:"shell,omitempty"`
+	KeepShell bool              `json:"keepShell,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
+	Agent     string            `json:"agent,omitempty"`
+	Task      string            `json:"task,omitempty"`
+	Repo      string            `json:"repo,omitempty"`
+	Workspace string            `json:"workspace,omitempty"`
+	Model     string            `json:"model,omitempty"`
+	Size      Size              `json:"size"`
+	StartedAt time.Time         `json:"startedAt"`
+}
+
+// OSCState is one status report an agent printed with OSC 7501
+// (the lmux convention: ESC ] 7501 ; state=working:app=my-agent ESC \).
+type OSCState struct {
+	Term  string
+	State string            // working, blocked, done, error, idle, clear
+	App   string            // the agent's name, if it gave one
+	Attrs map[string]string // every key=value in the payload
 }
 
 // Manager owns all terminals of one daemon.
@@ -70,6 +102,8 @@ type Manager struct {
 	terms      map[string]*Term
 	scrollback int
 	onChange   func()
+	// OnOSC, when set, receives every OSC 7501 status report any terminal prints.
+	OnOSC func(OSCState)
 }
 
 func NewManager(scrollback int, onChange func()) *Manager {
@@ -157,12 +191,40 @@ type Term struct {
 	m       *Manager
 	mu      sync.Mutex
 	info    Info
+	opts    Options
 	f       *os.File
 	cmd     *exec.Cmd
 	scroll  *ring
 	clients map[*Client]struct{}
 	exited  chan struct{}
+	oscTail []byte // bytes kept between reads so a report split across chunks still parses
 }
+
+// Persisted returns what is needed to recreate this terminal later.
+func (t *Term) Persisted() Persisted {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	o := t.opts
+	return Persisted{Name: o.Name, Command: o.Command, Cwd: t.info.Cwd, Shell: o.Shell, KeepShell: o.KeepShell, Env: o.Env,
+		Agent: o.Agent, Task: o.Task, Repo: o.Repo, Workspace: o.Workspace, Model: t.info.Model, Size: t.info.Size, StartedAt: t.info.StartedAt}
+}
+
+// Persisted lists every live terminal in recreate-able form.
+func (m *Manager) Persisted() []Persisted {
+	var out []Persisted
+	for _, info := range m.List() {
+		if !info.Alive {
+			continue
+		}
+		if t, ok := m.Get(info.Name); ok {
+			out = append(out, t.Persisted())
+		}
+	}
+	return out
+}
+
+// ShellQuote wraps s in single quotes for a POSIX shell.
+func ShellQuote(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'" }
 
 func start(m *Manager, o Options) (*Term, error) {
 	shell := o.Shell
@@ -211,12 +273,15 @@ func start(m *Manager, o Options) (*Term, error) {
 		return nil, fmt.Errorf("start %q: %w", label, err)
 	}
 	t := &Term{
-		m: m, f: f, cmd: cmd,
+		m: m, f: f, cmd: cmd, opts: o,
 		scroll:  newRing(m.scrollback),
 		clients: map[*Client]struct{}{},
 		exited:  make(chan struct{}),
 		info: Info{Name: o.Name, Command: label, Cwd: cwd, Agent: o.Agent, Task: o.Task, Repo: o.Repo, Workspace: o.Workspace, Model: o.Model,
-			PID: cmd.Process.Pid, Size: sz, Alive: true, StartedAt: time.Now(), LastOutputAt: time.Now()},
+			PID: cmd.Process.Pid, Size: sz, Alive: true, StartedAt: time.Now(), LastOutputAt: time.Now(), Restored: o.Restored},
+	}
+	if len(o.Preload) > 0 {
+		t.scroll.Write(o.Preload)
 	}
 	go t.readLoop()
 	return t, nil
@@ -338,6 +403,7 @@ func (t *Term) readLoop() {
 	for {
 		n, err := t.f.Read(buf)
 		if n > 0 {
+			t.scanOSC(buf[:n])
 			t.broadcast(buf[:n])
 		}
 		if err != nil {
@@ -368,6 +434,59 @@ func (t *Term) readLoop() {
 		c.notifyExit(code)
 	}
 	t.m.onChange()
+}
+
+const oscPrefix = "\x1b]7501;"
+
+// scanOSC finds OSC 7501 reports in the output stream and hands them to OnOSC.
+// Only readLoop calls it, so oscTail needs no lock.
+func (t *Term) scanOSC(chunk []byte) {
+	if t.m.OnOSC == nil {
+		return
+	}
+	buf := append(t.oscTail, chunk...)
+	for {
+		i := bytes.Index(buf, []byte(oscPrefix))
+		if i < 0 {
+			break
+		}
+		rest := buf[i+len(oscPrefix):]
+		end, termLen := -1, 0
+		if j := bytes.IndexByte(rest, 0x07); j >= 0 {
+			end, termLen = j, 1
+		}
+		if j := bytes.Index(rest, []byte("\x1b\\")); j >= 0 && (end < 0 || j < end) {
+			end, termLen = j, 2
+		}
+		if end < 0 { // report not finished in this chunk: keep it for the next read
+			if len(rest) > 512 { // garbage, give up on it
+				buf = buf[len(buf)-64:]
+				break
+			}
+			t.oscTail = append(t.oscTail[:0], buf[i:]...)
+			return
+		}
+		t.m.OnOSC(parseOSC(t.info.Name, string(rest[:end])))
+		buf = rest[end+termLen:]
+	}
+	if len(buf) > 64 {
+		buf = buf[len(buf)-64:]
+	}
+	t.oscTail = append(t.oscTail[:0], buf...)
+}
+
+func parseOSC(term, payload string) OSCState {
+	st := OSCState{Term: term, Attrs: map[string]string{}}
+	for _, kv := range strings.Split(payload, ":") {
+		k, v, _ := strings.Cut(kv, "=")
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		st.Attrs[k] = strings.TrimSpace(v)
+	}
+	st.State, st.App = st.Attrs["state"], st.Attrs["app"]
+	return st
 }
 
 func (t *Term) broadcast(p []byte) {
