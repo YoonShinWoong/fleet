@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="260" height="72" viewBox="0 0 260 72" role="img" aria-label="fleet">
+  <rect x="4" y="8" width="56" height="56" rx="14" fill="#1f2937"/>
+  <rect x="16" y="22" width="32" height="6" rx="3" fill="#60a5fa"/>
+  <rect x="16" y="33" width="22" height="6" rx="3" fill="#fbbf24"/>
+  <rect x="16" y="44" width="27" height="6" rx="3" fill="#4ade80"/>
+  <text x="76" y="52" font-family="-apple-system, 'SF Pro Display', Inter, Helvetica, Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="1" fill="#f3f4f6">fleet</text>
+</svg>

@@ -1,6 +1,6 @@
-# fleet
+<p align="center"><a href="README.md">English</a> | 한국어</p>
 
-A lightweight tmux for coding agents: named PTY sessions on an always-on Mac, reachable from another Mac or a phone, with Claude Code and Codex status, split panes, notifications and handoff between agents. MIT licensed.
+# fleet
 
 코딩 에이전트를 위한 가벼운 tmux. 늘 켜져 있는 메인 맥북에 데몬 하나를 두고, 그 안에서 이름 붙은 터미널(PTY)들이 클라이언트가 끊겨도 계속 돌아간다. 다른 맥북에서는 CLI로, 폰에서는 브라우저로 같은 터미널에 붙는다. Claude Code와 Codex가 보내는 훅 이벤트로 어느 터미널이 입력을 기다리는지도 한눈에 보인다.
 
