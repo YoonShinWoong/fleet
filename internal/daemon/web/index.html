@@ -15,24 +15,24 @@
 </head>
 <body>
 <header id="top">
-  <button id="back" class="icon" title="목록" hidden>‹</button>
+  <button id="back" class="icon" data-i18n-title="back" hidden>‹</button>
   <h1>fleet</h1>
   <span id="summary" class="summary"></span>
   <span class="spacer"></span>
   <span id="conn" class="chip">connecting</span>
-  <button id="bell" class="icon" title="데스크톱 알림">🔕</button>
-  <button id="sound" class="icon" title="소리">🔇</button>
+  <button id="bell" class="icon" data-i18n-title="btn.bell">🔕</button>
+  <button id="sound" class="icon" data-i18n-title="btn.sound">🔇</button>
   <button id="newbtn" class="primary">+ new</button>
 </header>
 <div id="app">
   <aside id="side">
-    <input id="filter" placeholder="이름 필터, 두 글자부터는 출력도 검색" autocomplete="off" spellcheck="false">
+    <input id="filter" data-i18n-ph="filter.ph" autocomplete="off" spellcheck="false">
     <div id="list"></div>
-    <div class="hint"><kbd>⌥1-9</kbd> 전환 <kbd>⌥N</kbd> 다음 입력 대기 <kbd>⌥S</kbd> 분할 <kbd>⌥W</kbd> 닫기 <kbd>⌥M</kbd> 최대화 <kbd>⌥F</kbd> 찾기</div>
+    <div class="hint"><kbd>⌥1-9</kbd> <span data-i18n="hint.switch"></span> <kbd>⌥N</kbd> <span data-i18n="hint.next"></span> <kbd>⌥S</kbd> <span data-i18n="hint.split"></span> <kbd>⌥W</kbd> <span data-i18n="hint.close"></span> <kbd>⌥M</kbd> <span data-i18n="hint.max"></span> <kbd>⌥F</kbd> <span data-i18n="hint.find"></span></div>
   </aside>
   <section id="main">
     <div id="panes" class="n0"></div>
-    <div id="empty" class="empty">왼쪽에서 터미널을 고르거나 + new 로 만들어.</div>
+    <div id="empty" class="empty" data-i18n="empty.main"></div>
     <div id="keys" hidden>
       <button data-seq="\u001b">esc</button>
       <button data-seq="\t">tab</button>
@@ -49,38 +49,38 @@
 </div>
 <div id="toasts"></div>
 <dialog id="newdlg">
-  <div class="tabs"><b>새 터미널</b><span class="spacer"></span><button type="button" class="icon" id="dlgclose">×</button></div>
+  <div class="tabs"><b data-i18n="dlg.title"></b><span class="spacer"></span><button type="button" class="icon" id="dlgclose">×</button></div>
   <form id="newform" class="form">
-    <label>워크스페이스
+    <label><span data-i18n="dlg.workspace"></span>
       <select name="workspace" id="wssel"></select>
     </label>
     <div id="wsnew" class="form sub">
-      <label>워크스페이스 이름 <input name="wsname" placeholder="예: fix-login" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" autocomplete="off"></label>
-      <label>어디서 <select name="source" id="srcsel"></select></label>
-      <label id="pathrow" hidden>폴더 경로 <input name="path" placeholder="~/workspace/foo" autocomplete="off"></label>
-      <label id="branchrow">브랜치 (선택) <input name="branch" placeholder="기본: 워크스페이스 이름" autocomplete="off"></label>
+      <label><span data-i18n="dlg.wsname"></span> <input name="wsname" data-i18n-ph="dlg.wsname.ph" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" autocomplete="off"></label>
+      <label><span data-i18n="dlg.where"></span> <select name="source" id="srcsel"></select></label>
+      <label id="pathrow" hidden><span data-i18n="dlg.path"></span> <input name="path" placeholder="~/workspace/foo" autocomplete="off"></label>
+      <label id="branchrow"><span data-i18n="dlg.branch"></span> <input name="branch" data-i18n-ph="dlg.branch.ph" autocomplete="off"></label>
     </div>
-    <label>에이전트 <div class="seg" id="agentseg"></div></label>
-    <label id="modelrow">모델 (선택) <input name="model" list="modellist" placeholder="기본 모델" autocomplete="off"><datalist id="modellist"></datalist></label>
-    <label>터미널 이름 (선택) <input name="name" placeholder="자동: 워크스페이스-에이전트" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" autocomplete="off"></label>
-    <button class="primary">시작</button>
+    <label><span data-i18n="dlg.agent"></span> <div class="seg" id="agentseg"></div></label>
+    <label id="modelrow"><span data-i18n="dlg.model"></span> <input name="model" list="modellist" data-i18n-ph="dlg.model.ph" autocomplete="off"><datalist id="modellist"></datalist></label>
+    <label><span data-i18n="dlg.name"></span> <input name="name" data-i18n-ph="dlg.name.ph" pattern="[A-Za-z0-9][A-Za-z0-9._-]*" autocomplete="off"></label>
+    <button class="primary" data-i18n="dlg.start"></button>
   </form>
 </dialog>
 <dialog id="askdlg">
   <form id="askform" class="form">
     <div class="tabs"><b id="asktitle"></b><span class="spacer"></span><button type="button" class="icon" id="askcancel">×</button></div>
     <input id="askinput" list="asklist" autocomplete="off"><datalist id="asklist"></datalist>
-    <button class="primary">확인</button>
+    <button class="primary" data-i18n="ask.ok"></button>
   </form>
 </dialog>
 <dialog id="handoffdlg">
-  <div class="tabs"><b id="hotitle">넘겨주기</b><span class="spacer"></span><button type="button" class="icon" id="hoclose">×</button></div>
+  <div class="tabs"><b id="hotitle"></b><span class="spacer"></span><button type="button" class="icon" id="hoclose">×</button></div>
   <form id="hoform" class="form">
-    <label>받을 에이전트 <div class="seg" id="hoseg"></div></label>
-    <label>모델 (선택) <input name="model" list="homodels" placeholder="기본 모델" autocomplete="off"><datalist id="homodels"></datalist></label>
-    <label class="check"><input type="checkbox" name="close"> 넘긴 뒤 이전 터미널 닫기</label>
-    <p class="note">이전 터미널의 마지막 출력과 git 상태를 <code>.fleet/handoff-*.md</code>로 남기고, 새 에이전트가 그 파일을 읽고 이어가도록 첫 프롬프트를 넣어 시작해.</p>
-    <button class="primary">넘기기</button>
+    <label><span data-i18n="ho.to"></span> <div class="seg" id="hoseg"></div></label>
+    <label><span data-i18n="ho.model"></span> <input name="model" list="homodels" data-i18n-ph="dlg.model.ph" autocomplete="off"><datalist id="homodels"></datalist></label>
+    <label class="check"><input type="checkbox" name="close"> <span data-i18n="ho.close"></span></label>
+    <p class="note" data-i18n="ho.note"></p>
+    <button class="primary" data-i18n="ho.submit"></button>
   </form>
 </dialog>
 <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js"></script>

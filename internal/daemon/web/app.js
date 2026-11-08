@@ -2,7 +2,8 @@
 const $ = s => document.querySelector(s);
 const listEl = $('#list'), panesEl = $('#panes'), emptyEl = $('#empty'), toastsEl = $('#toasts'), summaryEl = $('#summary'), connEl = $('#conn');
 const ORDER = { needs_input: 0, working: 1, error: 2, idle: 3, shell: 4, unknown: 5, exited: 6, ended: 7 };
-const GROUP = { needs_input: '입력 필요', working: '작업 중', error: '오류', idle: '대기', shell: '셸', unknown: '알 수 없음', exited: '종료', ended: '종료' };
+const G = st => t('group.' + st) === 'group.' + st ? st : t('group.' + st);
+const GROUP = new Proxy({}, { get: (_, st) => G(String(st)) });
 const enc = new TextEncoder();
 const coarse = matchMedia('(pointer: coarse) and (hover: none)').matches; // touch devices, not Macs with a trackpad
 const mobile = () => matchMedia('(max-width: 800px)').matches;
@@ -23,6 +24,12 @@ const seen = {};
 const panes = [];
 let focusedId = null, paneSeq = 0;
 
+function shortPath(p) {
+  p = p.replace(/^\/Users\/[^/]+|^\/home\/[^/]+/, '~');
+  if (p.length <= 28) return p;
+  const parts = p.split('/').filter(Boolean);
+  return '…/' + parts.slice(-2).join('/');
+}
 function loadJSON(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }
 function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
@@ -35,7 +42,8 @@ function computeRows() {
     let status = s ? s.status : 'shell';
     if (!t.alive) status = 'exited'; else if (status === 'ended' || status === 'unknown') status = 'shell';
     const quiet = Math.round((Date.now() - new Date(t.lastOutputAt)) / 1000);
-    const last = s && t.alive ? (s.status !== 'working' && s.lastMessage ? s.lastMessage : (s.lastTool || '')) : (t.alive ? `${t.command}${quiet > 5 ? ` · quiet ${age(t.lastOutputAt)}` : ''}` : `exit ${t.exitCode}`);
+    const cmd = (t.command || '').split(' ')[0].split('/').pop();
+    const last = s && t.alive ? (s.status !== 'working' && s.lastMessage ? s.lastMessage : (s.lastTool || '')) : (t.alive ? `${cmd}${quiet > 5 ? ` · quiet ${age(t.lastOutputAt)}` : ''}` : `exit ${t.exitCode}`);
     return { name: t.name, agent: s ? s.agent : (t.agent || ''), status, last, clients: t.clients, sub: s ? s.subagents : 0,
       at: s && t.alive ? s.updatedAt : t.startedAt, alive: t.alive, exitCode: t.exitCode, cwd: t.cwd, repo: t.repo || '', workspace: t.workspace || '', model: (s && s.model) || t.model || '' };
   });
@@ -71,15 +79,15 @@ function renderList() {
     const key = k || '__other';
     const isCol = collapsed.has(key);
     const waitingN = rs.filter(r => r.status === 'needs_input').length;
-    const count = isCol ? `<span class="count">${rs.length}${waitingN ? ` · <b>${waitingN} 입력</b>` : ''}</span>` : '';
+    const count = isCol ? `<span class="count">${rs.length}${waitingN ? ` · <b>${t('count.input', { n: waitingN })}</b>` : ''}</span>` : '';
     if (k) {
-      const meta = w ? (w.kind === 'worktree' ? `${w.repo} · ${w.branch}` : (w.path || '').replace(/^\/Users\/[^/]+/, '~')) : '';
-      html += `<div class="ws s-${roll}${isCol ? ' col' : ''}" data-ws="${esc(k)}"><span class="chev">▾</span><span class="dot"></span><span class="wsname" title="${esc(k)}">${esc(k)}</span><span class="wsmeta" title="${esc(w?.path || '')}">${esc(meta)}</span><span class="spacer"></span>${count}<button data-act="wsadd" title="이 워크스페이스에 터미널 추가">+</button>${rs.length ? '' : '<button data-act="wsrm" title="워크스페이스 잊기">×</button>'}</div>`;
+      const meta = w ? (w.kind === 'worktree' ? `${w.repo} · ${w.branch}` : shortPath(w.path || '')) : '';
+      html += `<div class="ws s-${roll}${isCol ? ' col' : ''}" data-ws="${esc(k)}"><span class="chev">▾</span><span class="dot"></span><span class="wsname" title="${esc(k)}">${esc(k)}</span><span class="wsmeta" title="${esc(w?.path || '')}">${esc(meta)}</span><span class="spacer"></span>${count}<button data-act="wsadd" title="${t('ws.add')}">+</button>${rs.length ? '' : `<button data-act="wsrm" title="${t('ws.forget')}">×</button>`}</div>`;
       if (isCol) continue;
       if (wsAddOpen.has(k)) html += `<div class="wsadd" data-ws="${esc(k)}">${agents.map(a => `<button data-act="wsopen" data-agent="${esc(a.name)}">${esc(a.name)}</button>`).join('')}</div>`;
-      if (!rs.length && !wsAddOpen.has(k)) html += `<div class="ws-empty">터미널 없음. + 로 추가</div>`;
+      if (!rs.length && !wsAddOpen.has(k)) html += `<div class="ws-empty">${t('ws.empty')}</div>`;
     } else if (rs.length) {
-      html += `<div class="ws s-${roll}${isCol ? ' col' : ''}" data-ws="__other"><span class="chev">▾</span><span class="dot"></span><span class="wsname">기타</span><span class="wsmeta">워크스페이스 밖</span><span class="spacer"></span>${count}</div>`;
+      html += `<div class="ws s-${roll}${isCol ? ' col' : ''}" data-ws="__other"><span class="chev">▾</span><span class="dot"></span><span class="wsname">${t('ws.other')}</span><span class="wsmeta">${t('ws.otherMeta')}</span><span class="spacer"></span>${count}</div>`;
       if (isCol) continue;
     }
     for (const r of rs) {
@@ -92,21 +100,21 @@ function renderList() {
         <div class="col">
           <div class="l1"><span class="name">${esc(r.name)}</span>${r.agent ? `<span class="agent">${esc(r.agent)}</span>` : ''}${r.model ? `<span class="model">${esc(r.model)}</span>` : ''}<span class="age">${age(r.at)}</span></div>
           <div class="l2">${esc(r.last || GROUP[r.status] || r.status)}${r.sub ? ` · ${r.sub} sub` : ''}</div>
-          <div class="l3">${esc(GROUP[r.status] || r.status)}${r.clients ? ` · ${r.clients} viewer${r.clients > 1 ? 's' : ''}` : ''}${n ? ` · <kbd>⌥${n}</kbd>` : ''}</div>
+          <div class="l3">${esc(GROUP[r.status] || r.status)}${r.clients ? ` · ${r.clients === 1 ? t('viewers1') : t('viewers', { n: r.clients })}` : ''}${n ? ` · <kbd>⌥${n}</kbd>` : ''}</div>
         </div>
-        <div class="acts"><button data-act="split" title="옆 칸으로 열기">⫼</button><button data-act="kill" title="kill">×</button></div>
+        <div class="acts"><button data-act="split" title="${t('item.split')}">⫼</button><button data-act="kill" title="${t('item.kill')}">×</button></div>
       </div>`;
     }
   }
   if (hitsQ && $('#filter').value.trim() === hitsQ) {
-    html += `<div class="group">출력에서 찾음 · ${hits.length ? hits.length + '개 터미널' : '없음'}</div>`;
+    html += `<div class="group">${t('search.group', { n: hits.length ? (hits.length === 1 ? t('search.terms1') : t('search.terms', { n: hits.length })) : t('search.none') })}</div>`;
     for (const h of hits) {
-      html += `<div class="hit" data-name="${esc(h.term)}" data-q="${esc(hitsQ)}"><div class="hn">${esc(h.term)}${h.workspace ? `<span class="agent">${esc(h.workspace)}</span>` : ''}<span class="age">${h.count}건</span></div>${(h.lines || []).map(l => `<div class="hl">${highlight(l, hitsQ)}</div>`).join('')}</div>`;
+      html += `<div class="hit" data-name="${esc(h.term)}" data-q="${esc(hitsQ)}"><div class="hn">${esc(h.term)}${h.workspace ? `<span class="agent">${esc(h.workspace)}</span>` : ''}<span class="age">×${h.count}</span></div>${(h.lines || []).map(l => `<div class="hl">${highlight(l, hitsQ)}</div>`).join('')}</div>`;
     }
   }
-  listEl.innerHTML = html || '<div class="none">아직 없음. + new 로 시작해.</div>';
+  listEl.innerHTML = html || `<div class="none">${t('list.none')}</div>`;
   const waiting = rows.filter(r => r.status === 'needs_input').length, working = rows.filter(r => r.status === 'working').length;
-  summaryEl.textContent = [waiting ? `${waiting} 입력 필요` : '', working ? `${working} 작업 중` : ''].filter(Boolean).join(' · ');
+  summaryEl.textContent = [waiting ? (waiting === 1 ? t('summary.waiting1') : t('summary.waiting', { n: waiting })) : '', working ? t('summary.working', { n: working }) : ''].filter(Boolean).join(' · ');
   document.title = (waiting ? `(${waiting}) ` : '') + 'fleet';
   for (const p of panes) updatePaneHead(p);
 }
@@ -133,7 +141,7 @@ listEl.addEventListener('click', async e => {
     }
     if (act === 'wsrm') {
       const b = e.target.closest('button');
-      if (!b.classList.contains('arm')) { b.classList.add('arm'); b.textContent = '잊기?'; setTimeout(() => { b.classList.remove('arm'); b.textContent = '×'; }, 3000); return; }
+      if (!b.classList.contains('arm')) { b.classList.add('arm'); b.textContent = t('ws.forgetConfirm'); setTimeout(() => { b.classList.remove('arm'); b.textContent = '×'; }, 3000); return; }
       const r = await api(`/v1/workspaces/${encodeURIComponent(ws)}`, { method: 'DELETE' });
       if (!r.ok) toast(await r.text());
       return;
@@ -146,7 +154,7 @@ listEl.addEventListener('click', async e => {
   if (act === 'split') { addPane(name); return; }
   if (act === 'kill') {
     const b = e.target.closest('button');
-    if (!b.classList.contains('arm')) { b.classList.add('arm'); b.textContent = 'kill?'; setTimeout(() => { b.classList.remove('arm'); b.textContent = '×'; }, 3000); return; }
+    if (!b.classList.contains('arm')) { b.classList.add('arm'); b.textContent = t('item.killConfirm'); setTimeout(() => { b.classList.remove('arm'); b.textContent = '×'; }, 3000); return; }
     const r = await api(`/v1/terms/${encodeURIComponent(name)}`, { method: 'DELETE' });
     if (!r.ok) toast(await r.text());
     for (const p of panes.filter(p => p.name === name)) closePane(p);
@@ -174,11 +182,11 @@ function highlight(line, q) {
 const focusedPane = () => panes.find(p => p.id === focusedId) || null;
 
 function addPane(name) {
-  if (panes.length >= 4) { toast('칸은 최대 4개까지'); return focusedPane(); }
+  if (panes.length >= 4) { toast(t('toast.max')); return focusedPane(); }
   const id = ++paneSeq;
   const el = document.createElement('div');
   el.className = 'pane'; el.dataset.id = id;
-  el.innerHTML = `<div class="phead"><span class="dot"></span><span class="pname"></span><span class="pstatus"></span><span class="spacer"></span><button data-act="search" title="출력에서 찾기 (⌥F)">find</button><button data-act="model" title="모델 바꾸기 (/model 입력)">model</button><button data-act="handoff" title="다른 에이전트로 넘기기">↪</button><button data-act="max" title="최대화 (⌥M)">⤢</button><button data-act="close" title="닫기 (⌥W)">×</button></div><div class="psearch" hidden><input placeholder="출력에서 찾기. Enter 다음, Shift+Enter 이전, Esc 닫기" autocomplete="off" spellcheck="false"><span class="cnt"></span><button data-act="prev" title="이전">↑</button><button data-act="next" title="다음">↓</button><button data-act="sclose" title="닫기">×</button></div><div class="pbody"><div class="choose">왼쪽 목록에서 터미널을 고르면 이 칸에 열려.</div></div>`;
+  el.innerHTML = `<div class="phead"><span class="dot"></span><span class="pname"></span><span class="pstatus"></span><span class="spacer"></span><button data-act="search" title="${t('pane.find')}">find</button><button data-act="model" title="${t('pane.model')}">model</button><button data-act="handoff" title="${t('pane.handoff')}">↪</button><button data-act="max" title="${t('pane.max')}">⤢</button><button data-act="close" title="${t('pane.close')}">×</button></div><div class="psearch" hidden><input placeholder="${t('search.ph')}" autocomplete="off" spellcheck="false"><span class="cnt"></span><button data-act="prev" title="${t('search.prev')}">↑</button><button data-act="next" title="${t('search.next')}">↓</button><button data-act="sclose" title="${t('search.close')}">×</button></div><div class="pbody"><div class="choose">${t('pane.choose')}</div></div>`;
   panesEl.appendChild(el);
   const p = { id, name: null, el, body: el.querySelector('.pbody'), term: null, fit: null, ws: null, ro: null, backoff: 500 };
   panes.push(p);
@@ -317,7 +325,7 @@ function connect(p) {
     if (e.data instanceof ArrayBuffer) { p.term.write(new Uint8Array(e.data)); return; }
     try {
       const m = JSON.parse(e.data);
-      if (m.t === 'exit') { p.term.write(`\r\n\x1b[2m[fleet] terminal exited (${m.code})\x1b[0m\r\n`); ws.onclose = null; p.el.classList.add('offline'); }
+      if (m.t === 'exit') { p.term.write(`\r\n\x1b[2m[fleet] ${t('pane.exited', { code: m.code })}\x1b[0m\r\n`); ws.onclose = null; p.el.classList.add('offline'); }
     } catch {}
   };
   ws.onclose = () => {
@@ -348,7 +356,7 @@ function toggleSearch(p, q) {
   if (sin.value) doFind(p, 1, true);
 }
 function doFind(p, dir, incremental = false) {
-  if (!p.search) return toast('검색 애드온을 못 불러왔어 (CDN)');
+  if (!p.search) return toast(t('search.addon'));
   const sin = p.el.querySelector('.psearch input'), q = sin.value;
   if (!q) { p.search.clearDecorations(); p.el.querySelector('.psearch .cnt').textContent = ''; return; }
   const opts = { decorations: SEARCH_DECOR, caseSensitive: false, incremental };
@@ -370,10 +378,10 @@ function detectTransitions() {
       const was = prevStatus[name];
       if (was === st) continue;
       const r = rowOf(name);
-      if (st === 'needs_input') notify(name, '입력이 필요해', r.last, 'needs');
-      else if (was === 'working' && st === 'idle') notify(name, '턴 끝남', r.last, 'idle');
-      else if (st === 'exited' && was && was !== 'exited') notify(name, `터미널 종료 (${r.exitCode})`, '', 'info');
-      else if (st === 'error') notify(name, '오류', r.last, 'err');
+      if (st === 'needs_input') notify(name, t('notify.needs'), r.last, 'needs');
+      else if (was === 'working' && st === 'idle') notify(name, t('notify.done'), r.last, 'idle');
+      else if (st === 'exited' && was && was !== 'exited') notify(name, t('notify.exited', { code: r.exitCode }), '', 'info');
+      else if (st === 'error') notify(name, t('notify.error'), r.last, 'err');
     }
   }
   prevStatus = cur;
@@ -408,8 +416,8 @@ function paintSettings() {
 }
 bell.addEventListener('click', async () => {
   if (!settings.desktop) {
-    if (!('Notification' in window)) return toast('이 브라우저는 알림을 지원하지 않아');
-    if (Notification.permission !== 'granted') { const perm = await Notification.requestPermission(); if (perm !== 'granted') return toast('알림 권한이 없어'); }
+    if (!('Notification' in window)) return toast(t('notify.unsupported'));
+    if (Notification.permission !== 'granted') { const perm = await Notification.requestPermission(); if (perm !== 'granted') return toast(t('notify.denied')); }
   }
   settings.desktop = !settings.desktop; saveJSON('fleet.settings', settings); paintSettings();
 });
@@ -425,7 +433,7 @@ function handleShortcut(e) {
     const cur = focusedPane()?.name;
     const waiting = rows.filter(r => r.status === 'needs_input');
     const next = waiting.find(r => r.name !== cur) || waiting[0];
-    if (next) openIn(focusedPane(), next.name); else toast('입력 기다리는 터미널 없음', false);
+    if (next) openIn(focusedPane(), next.name); else toast(t('notify.none'), false);
     e.preventDefault(); return true;
   }
   if (code === 'KeyS') { addPane(null); e.preventDefault(); return true; }
@@ -450,13 +458,14 @@ let agentSel = 'claude';
 async function loadMeta() {
   try { agents = await (await api('/v1/agents')).json(); repos = await (await api('/v1/repos')).json(); } catch {}
   if (!agents.length) agents = [{ name: 'shell' }, { name: 'claude' }, { name: 'codex' }];
+  paintAgentSeg();
 }
 function openDialog(presetWs) {
   const wssel = $('#wssel');
-  wssel.innerHTML = `<option value="__new">+ 새 워크스페이스</option>` + (snap.workspaces || []).map(w => `<option value="${esc(w.name)}">${esc(w.name)}${w.repo ? ' · ' + esc(w.repo) : ''}</option>`).join('');
+  wssel.innerHTML = `<option value="__new">${t('dlg.newWs')}</option>` + (snap.workspaces || []).map(w => `<option value="${esc(w.name)}">${esc(w.name)}${w.repo ? ' · ' + esc(w.repo) : ''}</option>`).join('');
   wssel.value = presetWs && (snap.workspaces || []).some(w => w.name === presetWs) ? presetWs : '__new';
   const srcsel = $('#srcsel');
-  srcsel.innerHTML = repos.map(r => `<option value="${esc(r.name)}">${esc(r.name)} · 새 워크트리</option>`).join('') + `<option value="__path">폴더 경로 직접 입력</option>`;
+  srcsel.innerHTML = repos.map(r => `<option value="${esc(r.name)}">${esc(t('dlg.repoOpt', { name: r.name }))}</option>`).join('') + `<option value="__path">${t('dlg.pathOpt')}</option>`;
   if (!repos.length) srcsel.value = '__path';
   const names = agents.map(a => a.name);
   if (!names.includes(agentSel)) agentSel = names.includes('claude') ? 'claude' : names[0];
@@ -466,11 +475,11 @@ function openDialog(presetWs) {
   setTimeout(() => (dlg.querySelector('#wsnew[hidden]') ? form.querySelector('[name=name]') : form.querySelector('[name=wsname]')).focus(), 0);
 }
 function paintAgentSeg() {
-  $('#agentseg').innerHTML = agents.map(a => `<button type="button" data-agent="${esc(a.name)}" class="${a.name === agentSel ? 'on' : ''}" title="${esc(a.command || '셸')}">${esc(a.name)}</button>`).join('');
+  $('#agentseg').innerHTML = agents.map(a => `<button type="button" data-agent="${esc(a.name)}" class="${a.name === agentSel ? 'on' : ''}" title="${esc(a.command || t('dlg.shell'))}">${esc(a.name)}</button>`).join('');
   const a = agents.find(x => x.name === agentSel);
   $('#modelrow').hidden = agentSel === 'shell';
   $('#modellist').innerHTML = (a?.models || []).map(m => `<option value="${esc(m)}">`).join('');
-  form.querySelector('[name=model]').placeholder = a?.models?.length ? '기본 모델 (예: ' + a.models.join(', ') + ')' : '기본 모델';
+  form.querySelector('[name=model]').placeholder = a?.models?.length ? t('dlg.model.eg', { list: a.models.join(', ') }) : t('dlg.model.ph');
 }
 function syncDialog() {
   const isNew = $('#wssel').value === '__new';
@@ -524,13 +533,13 @@ function ask(title, placeholder, suggestions) {
 async function pickModel(p) {
   if (!p.name) return;
   const r = rowOf(p.name);
-  if (!r?.agent) return toast('셸 터미널에는 모델이 없어. 에이전트 터미널에서 써.');
+  if (!r?.agent) return toast(t('model.shell'));
   const a = agents.find(x => x.name === r.agent);
-  const m = await ask(`${p.name} 모델 바꾸기`, a?.models?.length ? '예: ' + a.models.join(', ') : '모델 이름', a?.models || []);
+  const m = await ask(t('model.title', { name: p.name }), a?.models?.length ? t('model.eg', { list: a.models.join(', ') }) : t('model.ph'), a?.models || []);
   if (!m) return;
   const res = await api(`/v1/terms/${encodeURIComponent(p.name)}/model`, { method: 'POST', body: { model: m } });
   if (!res.ok) return toast(await res.text());
-  toast(`${p.name}: 모델 명령 보냄 (${m})`, false);
+  toast(t('model.sent', { name: p.name, m }), false);
   p.term?.focus();
 }
 const handoffdlg = $('#handoffdlg'), hoform = $('#hoform');
@@ -547,7 +556,7 @@ function openHandoff(p) {
   const cur = rowOf(p.name)?.agent;
   const cands = agents.filter(a => a.name !== 'shell');
   hoTo = (cands.find(a => a.name !== cur) || cands[0])?.name || '';
-  $('#hotitle').textContent = `${p.name} → 다른 에이전트로`;
+  $('#hotitle').textContent = t('ho.title', { name: p.name });
   hoform.reset(); paintHoSeg();
   handoffdlg.showModal();
 }
@@ -581,6 +590,7 @@ function connectFeed() {
     if (!getToken()) { es.close(); api('/v1/terms').then(() => connectFeed()).catch(() => {}); }
   };
 }
+applyI18n();
 loadMeta();
 connectFeed();
 setInterval(renderList, 15000);
