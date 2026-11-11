@@ -82,7 +82,7 @@ dialog::backdrop { background: rgba(0,0,0,.5); }
 .grid input, .grid select { padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:inherit; font:inherit; min-width:0; }
 .grid .wide { grid-column: 1 / -1; }
 @media (max-width: 800px) {
-  #app { grid-template-columns: 1fr; }
+  #app { grid-template-columns: minmax(0, 1fr); }
   section#main { display:none; }
   body.show-panes aside#side { display:none; }
   body.show-panes section#main { display:flex; }
