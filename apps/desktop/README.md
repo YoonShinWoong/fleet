@@ -5,7 +5,7 @@ A thin native shell for the keepty web app, built with Tauri 2. The window is a 
 - a menu bar item showing how many agents are waiting for you, with a menu to open the window, jump to the next waiting agent, change host, or quit
 - a Dock badge with the same number
 - native notifications while the window is hidden (needs input, turn finished, error)
-- `⌥⌘F` to bring the window up from anywhere
+- `⌥⌘K` to bring the window up from anywhere
 - the host and token remembered between launches (`~/Library/Application Support/dev.keepty.desktop/conn.json`)
 
 Closing the window hides it; the app keeps running in the menu bar. Quit from the menu.

@@ -235,7 +235,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
-                .with_shortcuts(["alt+super+f"])
+                .with_shortcuts(["alt+super+k"])
                 .expect("shortcut")
                 .with_handler(|app, _shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
@@ -248,7 +248,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![saved, connect])
         .setup(|app| {
             let handle = app.handle().clone();
-            let open = MenuItem::with_id(app, "open", "Open keepty", true, Some("Alt+Super+F"))?;
+            let open = MenuItem::with_id(app, "open", "Open keepty", true, Some("Alt+Super+K"))?;
             let next = MenuItem::with_id(app, "next", "Next agent waiting", true, None::<&str>)?;
             let host = MenuItem::with_id(app, "host", "Change host…", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "Quit keepty", true, None::<&str>)?;

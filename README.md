@@ -63,7 +63,7 @@ tmux has the right idea. A session that outlives the client. But it stops at the
   <p><img src="assets/mobile.png" alt="Two phone screens: the terminal list, and two terminals stacked with a back button" width="700"></p>
 
 - **A menu bar app for the Mac you sit at.**<br>
-  `keepty.app` (Tauri, 6 MB) wraps the same web app in a native window and adds what a browser tab cannot: a menu bar count of agents waiting for you, a Dock badge, notifications while the window is hidden, `⌥⌘F` from anywhere, and a remembered host and token. Mobile stays on the web app.
+  `keepty.app` (Tauri, 6 MB) wraps the same web app in a native window and adds what a browser tab cannot: a menu bar count of agents waiting for you, a Dock badge, notifications while the window is hidden, `⌥⌘K` from anywhere, and a remembered host and token. Mobile stays on the web app.
 
 - **Light.**<br>
   A single Go binary around 10 MB with the web app embedded. With 20 idle terminals the daemon sits at 12 MB of RSS and uses no measurable CPU over a minute (0 s of CPU time at `ps`'s one-second resolution, with or without a client attached). The host needs nothing else: no Node, no tmux, no browser engine. Everything lives in `~/.keepty`.
