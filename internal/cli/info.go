@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/config"
 )
 
 // runInfo prints what another device needs to reach this daemon.
@@ -38,7 +38,7 @@ func runInfo(_ []string) error {
 		fmt.Printf("  tailscale      http://%s:%s\n", ip, port)
 		if dns := firstOutput("sh", "-c", ts+" status --json | sed -n 's/.*\"DNSName\": *\"\\([^\"]*\\)\\.\".*/\\1/p' | head -1"); dns != "" {
 			fmt.Printf("  tailscale dns  http://%s:%s\n", dns, port)
-			fmt.Printf("\nHTTPS inside your tailnet (recommended for phones): run once on this machine\n  %s serve --bg %s\nthen use https://%s/ everywhere; fleet can stay bound to loopback.\n", filepathBase(ts), port, dns)
+			fmt.Printf("\nHTTPS inside your tailnet (recommended for phones): run once on this machine\n  %s serve --bg %s\nthen use https://%s/ everywhere; keepty can stay bound to loopback.\n", filepathBase(ts), port, dns)
 		}
 	} else {
 		fmt.Println("\nNo tailscale found. For other networks install it on every device: https://tailscale.com/download")
@@ -46,7 +46,7 @@ func runInfo(_ []string) error {
 	if strings.HasPrefix(cfg.Addr, "127.") || strings.HasPrefix(cfg.Addr, "localhost") {
 		fmt.Println("\nOnly loopback is bound. Without tailscale serve, set \"addr\" to \"0.0.0.0:" + port + "\" in config and restart to accept other devices.")
 	}
-	fmt.Printf("\non another mac\n  export FLEET_ADDR=<host>:%s FLEET_TOKEN=%s\n", port, cfg.Token)
+	fmt.Printf("\non another mac\n  export KEEPTY_ADDR=<host>:%s KEEPTY_TOKEN=%s\n", port, cfg.Token)
 	return nil
 }
 

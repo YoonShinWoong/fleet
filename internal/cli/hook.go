@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
-	"github.com/YoonShinWoong/fleet/internal/hooks"
+	"github.com/YoonShinWoong/keepty/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/hooks"
 )
 
 // runHook never fails: a broken control plane must never block an agent.
@@ -34,9 +34,9 @@ func runHook(args []string) error {
 		Context: hooks.Context{
 			Agent:      agent,
 			Host:       host,
-			Term:       os.Getenv("FLEET_TERM"),
-			Task:       os.Getenv("FLEET_TASK"),
-			Repo:       os.Getenv("FLEET_REPO"),
+			Term:       os.Getenv("KEEPTY_TERM"),
+			Task:       os.Getenv("KEEPTY_TASK"),
+			Repo:       os.Getenv("KEEPTY_REPO"),
 			ReceivedAt: time.Now(),
 		},
 		Payload: payload,
@@ -65,7 +65,7 @@ func runHook(args []string) error {
 }
 
 func debugf(format string, a ...any) {
-	if os.Getenv("FLEET_HOOK_DEBUG") != "" {
-		fmt.Fprintf(os.Stderr, "fleet hook: "+format+"\n", a...)
+	if os.Getenv("KEEPTY_HOOK_DEBUG") != "" {
+		fmt.Fprintf(os.Stderr, "keepty hook: "+format+"\n", a...)
 	}
 }

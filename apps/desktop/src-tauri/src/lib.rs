@@ -1,6 +1,6 @@
-//! fleet desktop: a thin native shell around the fleet web app.
+//! keepty desktop: a thin native shell around the keepty web app.
 //!
-//! The window is a WebView pointed at your fleet daemon. The Rust side only
+//! The window is a WebView pointed at your keepty daemon. The Rust side only
 //! does what a web page cannot: a menu bar item with the number of agents
 //! waiting for you, a Dock badge, native notifications while the window is
 //! hidden, a global shortcut, and remembering the host and token.
@@ -175,7 +175,7 @@ async fn poll(app: &AppHandle, client: &reqwest::Client, conn: &Conn) -> Result<
 
     if let Some(tray) = app.tray_by_id("main") {
         let _ = tray.set_title(Some(if waiting == 0 { String::new() } else { format!(" {waiting}") }));
-        let _ = tray.set_tooltip(Some(if waiting == 0 { "fleet: nothing waiting".to_string() } else { format!("fleet: {waiting} waiting for you") }));
+        let _ = tray.set_tooltip(Some(if waiting == 0 { "keepty: nothing waiting".to_string() } else { format!("keepty: {waiting} waiting for you") }));
     }
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.set_badge_count(if waiting == 0 { None } else { Some(waiting as i64) });
@@ -219,7 +219,7 @@ fn start_polling(app: AppHandle) {
                 if let Err(e) = poll(&app, &client, &c).await {
                     if let Some(tray) = app.tray_by_id("main") {
                         let _ = tray.set_title(Some(" !".to_string()));
-                        let _ = tray.set_tooltip(Some(format!("fleet: cannot reach {} ({e})", c.host)));
+                        let _ = tray.set_tooltip(Some(format!("keepty: cannot reach {} ({e})", c.host)));
                     }
                 }
             }
@@ -248,10 +248,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![saved, connect])
         .setup(|app| {
             let handle = app.handle().clone();
-            let open = MenuItem::with_id(app, "open", "Open fleet", true, Some("Alt+Super+F"))?;
+            let open = MenuItem::with_id(app, "open", "Open keepty", true, Some("Alt+Super+F"))?;
             let next = MenuItem::with_id(app, "next", "Next agent waiting", true, None::<&str>)?;
             let host = MenuItem::with_id(app, "host", "Change host…", true, None::<&str>)?;
-            let quit = MenuItem::with_id(app, "quit", "Quit fleet", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Quit keepty", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open, &next, &PredefinedMenuItem::separator(app)?, &host, &quit])?;
             let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray.png"))?;
             TrayIconBuilder::with_id("main")
@@ -259,7 +259,7 @@ pub fn run() {
                 .icon_as_template(true)
                 .menu(&menu)
                 .show_menu_on_left_click(true)
-                .tooltip("fleet")
+                .tooltip("keepty")
                 .on_menu_event(|app, e| match e.id.as_ref() {
                     "open" => show(app),
                     "next" => go_waiting(app),
@@ -276,12 +276,12 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // closing the window keeps fleet in the menu bar; Quit is in the tray menu
+            // closing the window keeps keepty in the menu bar; Quit is in the tray menu
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let _ = window.hide();
                 api.prevent_close();
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running fleet desktop");
+        .expect("error while running keepty desktop");
 }

@@ -1,5 +1,5 @@
 // Shared by index and term pages: token handling and an authed fetch.
-const TOKEN_KEY = 'fleet.token';
+const TOKEN_KEY = 'keepty.token';
 // A native shell can hand the token over once as ?token=...; keep it and hide it from the URL.
 try { const u = new URL(location.href); const qt = u.searchParams.get('token'); if (qt) { localStorage.setItem(TOKEN_KEY, qt); u.searchParams.delete('token'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); } } catch {}
 function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } }
@@ -14,7 +14,7 @@ async function api(path, opts = {}) {
   const t = getToken(); if (t) headers['authorization'] = 'Bearer ' + t;
   let r = await fetch(path, Object.assign({}, opts, { headers }));
   if (r.status === 401) {
-    const tok = prompt('fleet token (from ~/.fleet/config.json on the host)');
+    const tok = prompt('keepty token (from ~/.keepty/config.json on the host)');
     if (!tok) throw new Error('unauthorized');
     setToken(tok.trim());
     return api(path, opts);
@@ -36,8 +36,8 @@ function age(ts) {
 }
 function esc(t) { return String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
-// ---- i18n: English by default, Korean when the browser (or fleet.lang) says so ----
-const LANG = (() => { try { const l = localStorage.getItem('fleet.lang'); if (l) return l; } catch {} return (navigator.language || 'en').toLowerCase().startsWith('ko') ? 'ko' : 'en'; })();
+// ---- i18n: English by default, Korean when the browser (or keepty.lang) says so ----
+const LANG = (() => { try { const l = localStorage.getItem('keepty.lang'); if (l) return l; } catch {} return (navigator.language || 'en').toLowerCase().startsWith('ko') ? 'ko' : 'en'; })();
 const STR = {
   en: {
     'group.needs_input': 'Needs input', 'group.working': 'Working', 'group.error': 'Error', 'group.idle': 'Idle', 'group.shell': 'Shell', 'group.unknown': 'Unknown', 'group.exited': 'Exited', 'group.ended': 'Ended',
@@ -55,7 +55,7 @@ const STR = {
     'dlg.title': 'New terminal', 'dlg.workspace': 'Workspace', 'dlg.newWs': '+ new workspace', 'dlg.wsname': 'Workspace name', 'dlg.wsname.ph': 'e.g. fix-login', 'dlg.where': 'Where', 'dlg.pathOpt': 'Enter a folder path', 'dlg.repoOpt': '{name} · new worktree', 'dlg.path': 'Folder path', 'dlg.branch': 'Branch (optional)', 'dlg.branch.ph': 'default: workspace name', 'dlg.agent': 'Agent', 'dlg.model': 'Model (optional)', 'dlg.model.ph': 'default model', 'dlg.model.eg': 'default model (e.g. {list})', 'dlg.name': 'Terminal name (optional)', 'dlg.name.ph': 'auto: workspace-agent', 'dlg.start': 'Start', 'dlg.shell': 'shell',
     'ask.ok': 'OK',
     'model.title': '{name}: switch model', 'model.ph': 'model name', 'model.eg': 'e.g. {list}', 'model.sent': '{name}: model command sent ({m})', 'model.shell': 'Shells have no model. Use this on an agent terminal.',
-    'ho.title': '{name} → another agent', 'ho.to': 'Hand off to', 'ho.model': 'Model (optional)', 'ho.close': 'Close the old terminal afterwards', 'ho.note': 'Writes the old terminal’s last output and git status to .fleet/handoff-*.md, then starts the new agent with a first prompt that points at it.', 'ho.submit': 'Hand off',
+    'ho.title': '{name} → another agent', 'ho.to': 'Hand off to', 'ho.model': 'Model (optional)', 'ho.close': 'Close the old terminal afterwards', 'ho.note': 'Writes the old terminal’s last output and git status to .keepty/handoff-*.md, then starts the new agent with a first prompt that points at it.', 'ho.submit': 'Hand off',
     'notify.needs': 'needs your input', 'notify.done': 'turn finished', 'notify.exited': 'terminal exited ({code})', 'notify.error': 'error', 'notify.none': 'No terminal is waiting for input', 'notify.unsupported': 'This browser does not support notifications', 'notify.denied': 'Notification permission denied',
     'btn.new': '+ new', 'btn.bell': 'Desktop notifications', 'btn.sound': 'Sound', 'back': 'list',
   },
@@ -75,7 +75,7 @@ const STR = {
     'dlg.title': '새 터미널', 'dlg.workspace': '워크스페이스', 'dlg.newWs': '+ 새 워크스페이스', 'dlg.wsname': '워크스페이스 이름', 'dlg.wsname.ph': '예: fix-login', 'dlg.where': '어디서', 'dlg.pathOpt': '폴더 경로 직접 입력', 'dlg.repoOpt': '{name} · 새 워크트리', 'dlg.path': '폴더 경로', 'dlg.branch': '브랜치 (선택)', 'dlg.branch.ph': '기본: 워크스페이스 이름', 'dlg.agent': '에이전트', 'dlg.model': '모델 (선택)', 'dlg.model.ph': '기본 모델', 'dlg.model.eg': '기본 모델 (예: {list})', 'dlg.name': '터미널 이름 (선택)', 'dlg.name.ph': '자동: 워크스페이스-에이전트', 'dlg.start': '시작', 'dlg.shell': '셸',
     'ask.ok': '확인',
     'model.title': '{name} 모델 바꾸기', 'model.ph': '모델 이름', 'model.eg': '예: {list}', 'model.sent': '{name}: 모델 명령 보냄 ({m})', 'model.shell': '셸 터미널에는 모델이 없어. 에이전트 터미널에서 써.',
-    'ho.title': '{name} → 다른 에이전트로', 'ho.to': '받을 에이전트', 'ho.model': '모델 (선택)', 'ho.close': '넘긴 뒤 이전 터미널 닫기', 'ho.note': '이전 터미널의 마지막 출력과 git 상태를 .fleet/handoff-*.md 로 남기고, 새 에이전트가 그 파일을 읽고 이어가도록 첫 프롬프트를 넣어 시작해.', 'ho.submit': '넘기기',
+    'ho.title': '{name} → 다른 에이전트로', 'ho.to': '받을 에이전트', 'ho.model': '모델 (선택)', 'ho.close': '넘긴 뒤 이전 터미널 닫기', 'ho.note': '이전 터미널의 마지막 출력과 git 상태를 .keepty/handoff-*.md 로 남기고, 새 에이전트가 그 파일을 읽고 이어가도록 첫 프롬프트를 넣어 시작해.', 'ho.submit': '넘기기',
     'notify.needs': '입력이 필요해', 'notify.done': '턴 끝남', 'notify.exited': '터미널 종료 ({code})', 'notify.error': '오류', 'notify.none': '입력 기다리는 터미널 없음', 'notify.unsupported': '이 브라우저는 알림을 지원하지 않아', 'notify.denied': '알림 권한이 없어',
     'btn.new': '+ new', 'btn.bell': '데스크톱 알림', 'btn.sound': '소리', 'back': '목록',
   },

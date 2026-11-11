@@ -43,7 +43,7 @@ func termSize() (uint16, uint16) {
 }
 
 // parseInterspersed lets flags appear after positional arguments, as in
-// `fleet sh work -cwd ~/src`. Go's flag package stops at the first positional.
+// `keepty sh work -cwd ~/src`. Go's flag package stops at the first positional.
 func parseInterspersed(fs *flag.FlagSet, args []string) ([]string, error) {
 	var pos []string
 	for {

@@ -7,7 +7,7 @@ import (
 
 func runKill(args []string) error {
 	if len(args) != 1 {
-		return errors.New("usage: fleet kill <name>")
+		return errors.New("usage: keepty kill <name>")
 	}
 	c, err := newClient()
 	if err != nil {

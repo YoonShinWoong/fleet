@@ -15,17 +15,17 @@ func TestShellRoundTrip(t *testing.T) {
 	}
 	c, _ := term.Attach(Size{Cols: 80, Rows: 24})
 	defer c.Close()
-	if err := c.Write([]byte("hello-fleet\n")); err != nil {
+	if err := c.Write([]byte("hello-keepty\n")); err != nil {
 		t.Fatal(err)
 	}
 	deadline := time.Now().Add(3 * time.Second)
 	for time.Now().Before(deadline) {
-		if bytes.Count(term.Scrollback(), []byte("hello-fleet")) >= 2 { // echo + cat
+		if bytes.Count(term.Scrollback(), []byte("hello-keepty")) >= 2 { // echo + cat
 			break
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	if n := bytes.Count(term.Scrollback(), []byte("hello-fleet")); n < 2 {
+	if n := bytes.Count(term.Scrollback(), []byte("hello-keepty")); n < 2 {
 		t.Fatalf("expected echo and cat output, got %d occurrence(s): %q", n, term.Scrollback())
 	}
 	if !term.Info().Alive || term.Info().Clients != 1 {

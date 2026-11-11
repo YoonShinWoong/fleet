@@ -1,6 +1,6 @@
 {
-  "name": "fleet",
-  "short_name": "fleet",
+  "name": "keepty",
+  "short_name": "keepty",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0f1115",

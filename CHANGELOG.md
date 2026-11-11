@@ -4,6 +4,10 @@
 
 ## Unreleased
 
+### Changed
+- 이름을 fleet에서 keepty로 바꿈. 레포와 Go 모듈 `github.com/YoonShinWoong/keepty`, 명령 `keepty`, 환경변수 `KEEPTY_*`, 설정 폴더 `~/.keepty`, 레포별 `.keepty/`, launchd `dev.keepty.daemon`, 데스크톱 앱 `dev.keepty.desktop`. 예전 이름은 읽지 않는다.
+- 기존 설치 옮기기: `fleet service uninstall`, `mv ~/.fleet ~/.keepty`, 새 바이너리를 `~/.local/bin/keepty`에 두고 `keepty service install`, `keepty hooks install claude`(codex도), 에이전트 훅 설정에 남은 `fleet hook` 항목 삭제, 다른 기기의 `FLEET_*` 환경변수를 `KEEPTY_*`로. 웹 앱과 데스크톱 앱은 저장 키가 바뀌어 토큰을 한 번 다시 넣는다.
+
 ## v0.3.0 (2026-11-08)
 
 ### Added

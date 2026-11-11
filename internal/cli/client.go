@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/config"
 )
 
 var httpClient = &http.Client{Timeout: 15 * time.Second}
@@ -58,7 +58,7 @@ func (c *client) do(method, path string, in, out any) error {
 	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("daemon unreachable at %s (%v). Is `fleet daemon` running?", c.base, err)
+		return fmt.Errorf("daemon unreachable at %s (%v). Is `keepty daemon` running?", c.base, err)
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4<<20))

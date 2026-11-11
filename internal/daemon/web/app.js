@@ -1,4 +1,4 @@
-// fleet web app: sidebar list, up to four split panes of xterm terminals, and notifications.
+// keepty web app: sidebar list, up to four split panes of xterm terminals, and notifications.
 const $ = s => document.querySelector(s);
 const listEl = $('#list'), panesEl = $('#panes'), emptyEl = $('#empty'), toastsEl = $('#toasts'), summaryEl = $('#summary'), connEl = $('#conn');
 const ORDER = { needs_input: 0, working: 1, error: 2, idle: 3, shell: 4, unknown: 5, exited: 6, ended: 7 };
@@ -7,11 +7,11 @@ const GROUP = new Proxy({}, { get: (_, st) => G(String(st)) });
 const enc = new TextEncoder();
 const coarse = matchMedia('(pointer: coarse) and (hover: none)').matches; // touch devices, not Macs with a trackpad
 const mobile = () => matchMedia('(max-width: 800px)').matches;
-const settings = Object.assign({ desktop: false, sound: false }, loadJSON('fleet.settings', {}));
+const settings = Object.assign({ desktop: false, sound: false }, loadJSON('keepty.settings', {}));
 let snap = { terms: [], sessions: [], workspaces: [] };
 let agents = [], repos = [];
 const wsAddOpen = new Set();
-const collapsed = new Set(loadJSON('fleet.collapsed', []));
+const collapsed = new Set(loadJSON('keepty.collapsed', []));
 let shortcutRows = [];
 let hits = [], hitsQ = '', hitTimer;
 const SEARCH_DECOR = { matchBackground: '#f59e0b55', activeMatchBackground: '#f59e0b', matchOverviewRuler: '#f59e0b', activeMatchColorOverviewRuler: '#f59e0b' };
@@ -115,7 +115,7 @@ function renderList() {
   listEl.innerHTML = html || `<div class="none">${t('list.none')}</div>`;
   const waiting = rows.filter(r => r.status === 'needs_input').length, working = rows.filter(r => r.status === 'working').length;
   summaryEl.textContent = [waiting ? (waiting === 1 ? t('summary.waiting1') : t('summary.waiting', { n: waiting })) : '', working ? t('summary.working', { n: working }) : ''].filter(Boolean).join(' · ');
-  document.title = (waiting ? `(${waiting}) ` : '') + 'fleet';
+  document.title = (waiting ? `(${waiting}) ` : '') + 'keepty';
   for (const p of panes) updatePaneHead(p);
 }
 
@@ -126,7 +126,7 @@ listEl.addEventListener('click', async e => {
   if (head && !act) {
     const key = head.dataset.ws || '__other';
     collapsed.has(key) ? collapsed.delete(key) : collapsed.add(key);
-    saveJSON('fleet.collapsed', [...collapsed]);
+    saveJSON('keepty.collapsed', [...collapsed]);
     renderList();
     return;
   }
@@ -233,7 +233,7 @@ function assign(p, name) {
     });
   }
   p.term.open(p.body);
-  p.term.attachCustomKeyEventHandler(e => { if (e.type === 'keydown' && e.altKey && handleShortcut(e)) { e.fleetHandled = true; return false; } return true; });
+  p.term.attachCustomKeyEventHandler(e => { if (e.type === 'keydown' && e.altKey && handleShortcut(e)) { e.keeptyHandled = true; return false; } return true; });
   p.term.onData(d => {
     if (ctrl && d.length === 1) { const c = d.toUpperCase().charCodeAt(0); if (c >= 64 && c <= 95) d = String.fromCharCode(c - 64); setCtrl(false); }
     send(p, enc.encode(d));
@@ -299,10 +299,10 @@ function layout() {
 window.addEventListener('resize', layout);
 $('#back').addEventListener('click', () => { mobileShow = false; layout(); });
 
-function saveLayout() { saveJSON('fleet.layout', { panes: panes.map(p => p.name), focused: panes.findIndex(p => p.id === focusedId) }); }
+function saveLayout() { saveJSON('keepty.layout', { panes: panes.map(p => p.name), focused: panes.findIndex(p => p.id === focusedId) }); }
 function restoreLayout() {
   restored = true;
-  const saved = loadJSON('fleet.layout', null);
+  const saved = loadJSON('keepty.layout', null);
   const names = new Set(snap.terms.map(t => t.name));
   if (saved && Array.isArray(saved.panes)) {
     for (const n of saved.panes) if (n && names.has(n)) addPane(n);
@@ -333,7 +333,7 @@ function connect(p) {
     if (e.data instanceof ArrayBuffer) { p.term.write(new Uint8Array(e.data)); return; }
     try {
       const m = JSON.parse(e.data);
-      if (m.t === 'exit') { p.term.write(`\r\n\x1b[2m[fleet] ${t('pane.exited', { code: m.code })}\x1b[0m\r\n`); ws.onclose = null; p.el.classList.add('offline'); }
+      if (m.t === 'exit') { p.term.write(`\r\n\x1b[2m[keepty] ${t('pane.exited', { code: m.code })}\x1b[0m\r\n`); ws.onclose = null; p.el.classList.add('offline'); }
     } catch {}
   };
   ws.onclose = () => {
@@ -403,7 +403,7 @@ function notify(name, title, body, kind) {
   setTimeout(() => t.remove(), 8000);
   if (settings.sound) beep(kind === 'needs' ? 880 : 660);
   if (settings.desktop && 'Notification' in window && Notification.permission === 'granted') {
-    const n = new Notification(`${name} · ${title}`, { body: body || '', tag: 'fleet-' + name, icon: 'icon.svg' });
+    const n = new Notification(`${name} · ${title}`, { body: body || '', tag: 'keepty-' + name, icon: 'icon.svg' });
     n.onclick = () => { window.focus(); openIn(focusedPane(), name); n.close(); };
   }
 }
@@ -427,9 +427,9 @@ bell.addEventListener('click', async () => {
     if (!('Notification' in window)) return toast(t('notify.unsupported'));
     if (Notification.permission !== 'granted') { const perm = await Notification.requestPermission(); if (perm !== 'granted') return toast(t('notify.denied')); }
   }
-  settings.desktop = !settings.desktop; saveJSON('fleet.settings', settings); paintSettings();
+  settings.desktop = !settings.desktop; saveJSON('keepty.settings', settings); paintSettings();
 });
-snd.addEventListener('click', () => { settings.sound = !settings.sound; saveJSON('fleet.settings', settings); paintSettings(); if (settings.sound) beep(660); });
+snd.addEventListener('click', () => { settings.sound = !settings.sound; saveJSON('keepty.settings', settings); paintSettings(); if (settings.sound) beep(660); });
 paintSettings();
 
 /* ---------- shortcuts ---------- */
@@ -444,7 +444,7 @@ function handleShortcut(e) {
   if (code === 'KeyF') { toggleSearch(focusedPane()); e.preventDefault(); return true; }
   return false;
 }
-document.addEventListener('keydown', e => { if (e.fleetHandled) return; if (handleShortcut(e)) e.fleetHandled = true; });
+document.addEventListener('keydown', e => { if (e.keeptyHandled) return; if (handleShortcut(e)) e.keeptyHandled = true; });
 
 /* ---------- mobile key bar ---------- */
 const ctrlBtn = $('#ctrl');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark light">
-<title>fleet</title>
+<title>keepty</title>
 <style>
   :root { color-scheme: dark light; --bg:#0f1115; --card:#181b22; --fg:#e6e6e6; --mute:#8a8f98; --line:#262a33; --accent:#3b82f6; --err:#ef4444; }
   @media (prefers-color-scheme: light) { :root { --bg:#f6f7f9; --card:#fff; --fg:#111; --mute:#666; --line:#e3e5ea; } }
@@ -22,11 +22,11 @@
 </head>
 <body>
 <main>
-  <h1><svg width="26" height="26" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#0f1115"/><rect x="24" y="30" width="80" height="12" rx="6" fill="#3b82f6"/><rect x="24" y="58" width="56" height="12" rx="6" fill="#f59e0b"/><rect x="24" y="86" width="68" height="12" rx="6" fill="#22c55e"/></svg> fleet</h1>
-  <p>Connect to the Mac that runs <code>fleet daemon</code>.</p>
+  <h1><svg width="26" height="26" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#0f1115"/><rect x="24" y="30" width="80" height="12" rx="6" fill="#3b82f6"/><rect x="24" y="58" width="56" height="12" rx="6" fill="#f59e0b"/><rect x="24" y="86" width="68" height="12" rx="6" fill="#22c55e"/></svg> keepty</h1>
+  <p>Connect to the Mac that runs <code>keepty daemon</code>.</p>
   <form id="f">
     <label>Host <input name="host" placeholder="https://main.tailnet.ts.net  or  192.168.0.10:7677" autocomplete="off" spellcheck="false" required></label>
-    <label>Token <input name="token" type="password" placeholder="from `fleet info` on the host" autocomplete="off"></label>
+    <label>Token <input name="token" type="password" placeholder="from `keepty info` on the host" autocomplete="off"></label>
     <button>Connect</button>
     <div class="err" id="err"></div>
   </form>

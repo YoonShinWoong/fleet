@@ -1,16 +1,16 @@
-// Package cli implements the fleet command line.
+// Package cli implements the keepty command line.
 package cli
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/YoonShinWoong/fleet/internal/version"
+	"github.com/YoonShinWoong/keepty/internal/version"
 )
 
-const usageText = `fleet, a lightweight tmux for coding agents, reachable from any device
+const usageText = `keepty, a lightweight tmux for coding agents, reachable from any device
 
-usage: fleet <command> [args]
+usage: keepty <command> [args]
 
   daemon [-addr host:port]          run the control plane on the always-on host
   service install|uninstall|status|restart|log
@@ -30,15 +30,15 @@ usage: fleet <command> [args]
   send <name> <text...>             type a line into a terminal
   search <text>                     find text in every terminal's scrollback
   kill <name>                       end a terminal's process group and forget it
-  hooks install|show claude|codex   wire "fleet hook" into the agent's hook config (keeps existing hooks)
+  hooks install|show claude|codex   wire "keepty hook" into the agent's hook config (keeps existing hooks)
   hook <claude|codex>               hook entrypoint: forwards stdin JSON to the daemon, prints {}
   mcp ..., memory ...               (v0.2)
   version
 
 environment:
-  FLEET_HOME    config and state dir (default ~/.fleet)
-  FLEET_ADDR    daemon address for clients (default from config, 127.0.0.1:7677)
-  FLEET_TOKEN   bearer token for non-loopback daemons (default from local config)
+  KEEPTY_HOME    config and state dir (default ~/.keepty)
+  KEEPTY_ADDR    daemon address for clients (default from config, 127.0.0.1:7677)
+  KEEPTY_TOKEN   bearer token for non-loopback daemons (default from local config)
 `
 
 func Run(args []string) error {
@@ -83,12 +83,12 @@ func Run(args []string) error {
 	case "memory":
 		return runMemory(args[1:])
 	case "version", "-v", "--version":
-		fmt.Println("fleet", version.Version)
+		fmt.Println("keepty", version.Version)
 		return nil
 	case "help", "-h", "--help":
 		return usage()
 	}
-	return fmt.Errorf("unknown command %q (try: fleet help)", args[0])
+	return fmt.Errorf("unknown command %q (try: keepty help)", args[0])
 }
 
 func usage() error {

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Agent describes how to launch one coding agent inside a fleet terminal.
+// Agent describes how to launch one coding agent inside a keepty terminal.
 type Agent struct {
 	Command      string   `json:"command"`
 	ModelFlag    string   `json:"modelFlag,omitempty"`    // appended as "<flag> <model>" at launch, e.g. --model or -m
@@ -19,7 +19,7 @@ type Agent struct {
 	ResumeCommand string `json:"resumeCommand,omitempty"`
 }
 
-// Config is ~/.fleet/config.json. Missing keys fall back to Default().
+// Config is ~/.keepty/config.json. Missing keys fall back to Default().
 type Config struct {
 	Addr            string            `json:"addr"`
 	Token           string            `json:"token"`
@@ -36,7 +36,7 @@ func Default() *Config {
 	return &Config{
 		Addr:            "127.0.0.1:7677",
 		ScrollbackBytes: 1 << 20,
-		WorktreeRoot:    "~/fleet/worktrees",
+		WorktreeRoot:    "~/keepty/worktrees",
 		Repos:           map[string]string{},
 		Agents: map[string]Agent{
 			"claude": {Command: "claude --remote-control", ModelFlag: "--model", Models: []string{"fable", "opus", "sonnet", "haiku"}, ModelCommand: "/model {model}", ResumeCommand: "claude --remote-control --resume {session}"},
@@ -74,13 +74,13 @@ func (c *Config) backfill() {
 	}
 }
 
-// Dir is $FLEET_HOME or ~/.fleet.
+// Dir is $KEEPTY_HOME or ~/.keepty.
 func Dir() string {
-	if d := os.Getenv("FLEET_HOME"); d != "" {
+	if d := os.Getenv("KEEPTY_HOME"); d != "" {
 		return Expand(d)
 	}
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".fleet")
+	return filepath.Join(home, ".keepty")
 }
 
 func Path() string           { return filepath.Join(Dir(), "config.json") }
@@ -130,9 +130,9 @@ func Expand(p string) string {
 	return p
 }
 
-// ClientBase is the daemon URL a client talks to: $FLEET_ADDR wins over config.
+// ClientBase is the daemon URL a client talks to: $KEEPTY_ADDR wins over config.
 func ClientBase(cfg *Config) string {
-	addr := os.Getenv("FLEET_ADDR")
+	addr := os.Getenv("KEEPTY_ADDR")
 	if addr == "" {
 		addr = cfg.Addr
 	}
@@ -142,9 +142,9 @@ func ClientBase(cfg *Config) string {
 	return "http://" + addr
 }
 
-// ClientToken is $FLEET_TOKEN, else the local config token.
+// ClientToken is $KEEPTY_TOKEN, else the local config token.
 func ClientToken(cfg *Config) string {
-	if t := os.Getenv("FLEET_TOKEN"); t != "" {
+	if t := os.Getenv("KEEPTY_TOKEN"); t != "" {
 		return t
 	}
 	return cfg.Token

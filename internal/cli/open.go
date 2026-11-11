@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/YoonShinWoong/fleet/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
 )
 
 // runOpen starts an agent or shell terminal inside an existing workspace.
@@ -21,7 +21,7 @@ func runOpen(args []string) error {
 		return err
 	}
 	if len(pos) != 1 {
-		return errors.New("usage: fleet open <workspace> [-agent shell|claude|codex] [-name n] [-a]")
+		return errors.New("usage: keepty open <workspace> [-agent shell|claude|codex] [-name n] [-a]")
 	}
 	c, err := newClient()
 	if err != nil {
@@ -37,6 +37,6 @@ func runOpen(args []string) error {
 	if *doAttach {
 		return attach(c, info.Name)
 	}
-	fmt.Printf("attach with: fleet attach %s\n", info.Name)
+	fmt.Printf("attach with: keepty attach %s\n", info.Name)
 	return nil
 }

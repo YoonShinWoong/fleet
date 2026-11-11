@@ -1,4 +1,4 @@
-# fleet 설계
+# keepty 설계
 
 작성 2026-11-07. Orca 위에서 Claude Code와 Codex를 쓰다가 생긴 세 가지 불편에서 출발했다. 메모리와 MCP를 두 벌 관리하는 일, 무겁고 느린 세션, 맥북 두 대와 폰 사이의 싱크.
 
@@ -19,7 +19,7 @@
 
 ## 역할 분담
 
-fleet이 PTY, 스크롤백, 원격 접속, 상태, 설정, 메모리를 맡는다. 두 CLI가 모델 실행과 워크트리 격리와 폰에서의 풀 채팅(Claude Remote Control, Codex remote-control)을 맡는다. 폰의 fleet 화면은 보고 짧게 답하는 용도고 긴 대화는 두 앱으로 넘긴다.
+keepty이 PTY, 스크롤백, 원격 접속, 상태, 설정, 메모리를 맡는다. 두 CLI가 모델 실행과 워크트리 격리와 폰에서의 풀 채팅(Claude Remote Control, Codex remote-control)을 맡는다. 폰의 keepty 화면은 보고 짧게 답하는 용도고 긴 대화는 두 앱으로 넘긴다.
 
 ## 비목표
 
@@ -28,22 +28,22 @@ fleet이 PTY, 스크롤백, 원격 접속, 상태, 설정, 메모리를 맡는�
 ## 구성
 
 ```
-fleet daemon  (메인 맥북, 127.0.0.1:7677 또는 Tailscale 주소)
+keepty daemon  (메인 맥북, 127.0.0.1:7677 또는 Tailscale 주소)
   ├─ terminal manager   이름 붙은 PTY, 1MiB 원시 스크롤백, 클라이언트 집합, 최소 크기 적용
   ├─ attach protocol    GET /v1/terms/{name}/ws   바이너리 프레임 = PTY 바이트, 텍스트 프레임 = JSON 제어
-  ├─ hooks ingest       POST /v1/events/{agent}   Claude, Codex 훅이 보낸 JSON, FLEET_TERM으로 터미널과 연결
-  ├─ state store        ~/.fleet/state.json       에이전트 세션 상태
+  ├─ hooks ingest       POST /v1/events/{agent}   Claude, Codex 훅이 보낸 JSON, KEEPTY_TERM으로 터미널과 연결
+  ├─ state store        ~/.keepty/state.json       에이전트 세션 상태
   ├─ launcher           git worktree add + 터미널 생성 + 에이전트 실행
   ├─ live               GET /v1/stream (SSE)      터미널과 세션 스냅샷
   └─ web client         /  목록, /term.html  xterm.js
 
-fleet CLI  (어느 기기든, FLEET_ADDR와 FLEET_TOKEN)
+keepty CLI  (어느 기기든, KEEPTY_ADDR와 KEEPTY_TOKEN)
   sh, new, attach, ls, send, kill, hook
 ```
 
 ### 워크스페이스
 
-워크스페이스는 이름 붙은 폴더다. 종류는 둘, 레포에서 만든 git 워크트리와 임의의 폴더. `~/.fleet/workspaces.json`에 남아 데몬을 재시작해도 유지된다. 터미널은 워크스페이스 안에서 에이전트(설정의 agents) 또는 셸로 열리고, PTY 환경에 FLEET_WORKSPACE, FLEET_TASK, FLEET_REPO, FLEET_AGENT가 심긴다. 훅은 이 값으로 세션과 터미널을 연결한다. Orca의 워크스페이스에서 가져온 건 "작업 하나에 폴더 하나, 그 안에 에이전트 여럿"이라는 모양뿐이다.
+워크스페이스는 이름 붙은 폴더다. 종류는 둘, 레포에서 만든 git 워크트리와 임의의 폴더. `~/.keepty/workspaces.json`에 남아 데몬을 재시작해도 유지된다. 터미널은 워크스페이스 안에서 에이전트(설정의 agents) 또는 셸로 열리고, PTY 환경에 KEEPTY_WORKSPACE, KEEPTY_TASK, KEEPTY_REPO, KEEPTY_AGENT가 심긴다. 훅은 이 값으로 세션과 터미널을 연결한다. Orca의 워크스페이스에서 가져온 건 "작업 하나에 폴더 하나, 그 안에 에이전트 여럿"이라는 모양뿐이다.
 
 ### attach 프로토콜
 
@@ -61,7 +61,7 @@ fleet CLI  (어느 기기든, FLEET_ADDR와 FLEET_TOKEN)
 
 ### 훅
 
-`fleet hook <agent>`는 stdin JSON에 호스트명, FLEET_TERM(fleet이 PTY 환경에 심어둔 터미널 이름), FLEET_TASK, FLEET_REPO를 덧붙여 데몬에 보내고 항상 `{}`를 출력한 뒤 0으로 끝난다. 데몬이 없어도 1.5초 안에 포기한다. 제어판 장애가 에이전트를 막는 일은 없어야 한다.
+`keepty hook <agent>`는 stdin JSON에 호스트명, KEEPTY_TERM(keepty이 PTY 환경에 심어둔 터미널 이름), KEEPTY_TASK, KEEPTY_REPO를 덧붙여 데몬에 보내고 항상 `{}`를 출력한 뒤 0으로 끝난다. 데몬이 없어도 1.5초 안에 포기한다. 제어판 장애가 에이전트를 막는 일은 없어야 한다.
 
 ## 상태 모델
 
@@ -92,8 +92,8 @@ v0.4 재미. 머신당 MCP 서버를 한 번만 띄우는 프록시, 밤마다 �
 
 2026-11-07. 스택은 Go. 단일 바이너리, 웹 자산 임베드가 쉽다. 클라이언트는 웹과 터미널 둘 다 만든다. 데몬 API가 먼저이고 둘은 그 위의 뷰다. 호스트는 메인 맥북이며 늘 켜둔다.
 
-2026-11-07 (2). 처음엔 PTY를 tmux에 맡기고 그 위에 제어판만 두려 했다. 원하는 것이 "가벼운 tmux 같은 것을 만들어 다른 맥북과 폰에서 쉽게 쓰는 것"으로 정리되면서, PTY 층을 fleet이 직접 소유하기로 바꿨다. tmux 의존이 사라지고 CLI는 SSH 없이 WebSocket으로 붙는다.
+2026-11-07 (2). 처음엔 PTY를 tmux에 맡기고 그 위에 제어판만 두려 했다. 원하는 것이 "가벼운 tmux 같은 것을 만들어 다른 맥북과 폰에서 쉽게 쓰는 것"으로 정리되면서, PTY 층을 keepty이 직접 소유하기로 바꿨다. tmux 의존이 사라지고 CLI는 SSH 없이 WebSocket으로 붙는다.
 
 ## 열린 질문
 
-관리형 노트북이라면 Tailscale 설치 가능 여부 확인. Codex 관리형 워크트리(0.162, 기능 플래그)를 쓸지 fleet이 만든 워크트리에 그냥 들어갈지. 데몬 재시작은 v0.2에서 "프로세스를 살리는" 대신 "세션을 되살리는" 쪽으로 풀었다. 에이전트는 훅이 준 세션 id로 resume, 셸은 마지막 출력 재생. 프로세스 자체를 살리는 shpool 식 구조는 필요가 생기면 그때.
+관리형 노트북이라면 Tailscale 설치 가능 여부 확인. Codex 관리형 워크트리(0.162, 기능 플래그)를 쓸지 keepty이 만든 워크트리에 그냥 들어갈지. 데몬 재시작은 v0.2에서 "프로세스를 살리는" 대신 "세션을 되살리는" 쪽으로 풀었다. 에이전트는 훅이 준 세션 id로 resume, 셸은 마지막 출력 재생. 프로세스 자체를 살리는 shpool 식 구조는 필요가 생기면 그때.

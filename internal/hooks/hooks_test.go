@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoonShinWoong/fleet/internal/state"
+	"github.com/YoonShinWoong/keepty/internal/state"
 )
 
 func TestReduceStatus(t *testing.T) {

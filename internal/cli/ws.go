@@ -8,7 +8,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/YoonShinWoong/fleet/internal/workspace"
+	"github.com/YoonShinWoong/keepty/internal/workspace"
 )
 
 func runWS(args []string) error {
@@ -23,7 +23,7 @@ func runWS(args []string) error {
 	case "rm", "remove":
 		return wsRemove(args[1:])
 	}
-	return errors.New("usage: fleet ws ls | new <name> (-repo r | -path p) [-branch b] | rm <name> [-delete]")
+	return errors.New("usage: keepty ws ls | new <name> (-repo r | -path p) [-branch b] | rm <name> [-delete]")
 }
 
 func wsList() error {
@@ -56,7 +56,7 @@ func wsNew(args []string) error {
 		return err
 	}
 	if len(pos) != 1 || (*repo == "" && *path == "") {
-		return errors.New("usage: fleet ws new <name> (-repo r | -path p) [-branch b]")
+		return errors.New("usage: keepty ws new <name> (-repo r | -path p) [-branch b]")
 	}
 	c, err := newClient()
 	if err != nil {
@@ -70,7 +70,7 @@ func wsNew(args []string) error {
 	if w.Branch != "" {
 		fmt.Printf("branch    %s\n", w.Branch)
 	}
-	fmt.Printf("\nopen with: fleet open %s -agent claude|codex|shell\n", w.Name)
+	fmt.Printf("\nopen with: keepty open %s -agent claude|codex|shell\n", w.Name)
 	return nil
 }
 
@@ -82,7 +82,7 @@ func wsRemove(args []string) error {
 		return err
 	}
 	if len(pos) != 1 {
-		return errors.New("usage: fleet ws rm <name> [-delete]")
+		return errors.New("usage: keepty ws rm <name> [-delete]")
 	}
 	c, err := newClient()
 	if err != nil {

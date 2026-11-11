@@ -10,10 +10,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/YoonShinWoong/fleet/internal/state"
+	"github.com/YoonShinWoong/keepty/internal/state"
 )
 
-// Context is what the `fleet hook` client adds around the raw payload.
+// Context is what the `keepty hook` client adds around the raw payload.
 type Context struct {
 	Agent      string    `json:"agent"`
 	Host       string    `json:"host,omitempty"`

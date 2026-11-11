@@ -13,9 +13,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
-	"github.com/YoonShinWoong/fleet/internal/daemon"
-	"github.com/YoonShinWoong/fleet/internal/state"
+	"github.com/YoonShinWoong/keepty/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/daemon"
+	"github.com/YoonShinWoong/keepty/internal/state"
 )
 
 func runDaemon(args []string) error {
@@ -35,7 +35,7 @@ func runDaemon(args []string) error {
 		if err := cfg.Save(); err != nil {
 			return err
 		}
-		fmt.Printf("wrote %s with a fresh token. Remote clients: export FLEET_TOKEN=%s\n", config.Path(), cfg.Token)
+		fmt.Printf("wrote %s with a fresh token. Remote clients: export KEEPTY_TOKEN=%s\n", config.Path(), cfg.Token)
 	} else if !config.Exists() {
 		_ = cfg.Save()
 	}

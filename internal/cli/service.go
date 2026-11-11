@@ -8,18 +8,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/config"
 )
 
-const serviceLabel = "dev.fleet.daemon"
+const serviceLabel = "dev.keepty.daemon"
 
 func plistPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, "Library", "LaunchAgents", serviceLabel+".plist")
 }
 
-// servicePlist renders a launchd agent that keeps `fleet daemon` running for
-// the logged-in user: starts at login, restarts if it dies, logs to ~/.fleet.
+// servicePlist renders a launchd agent that keeps `keepty daemon` running for
+// the logged-in user: starts at login, restarts if it dies, logs to ~/.keepty.
 func servicePlist(bin, home string) string {
 	logPath := filepath.Join(config.Dir(), "daemon.log")
 	return `<?xml version="1.0" encoding="UTF-8"?>
@@ -42,7 +42,7 @@ func servicePlist(bin, home string) string {
   <dict>
     <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>HOME</key><string>` + home + `</string>
-    <key>FLEET_HOME</key><string>` + config.Dir() + `</string>
+    <key>KEEPTY_HOME</key><string>` + config.Dir() + `</string>
   </dict>
 </dict>
 </plist>
@@ -51,7 +51,7 @@ func servicePlist(bin, home string) string {
 
 func runService(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: fleet service install | uninstall | status | restart | log | plist")
+		return errors.New("usage: keepty service install | uninstall | status | restart | log | plist")
 	}
 	home, _ := os.UserHomeDir()
 	uid := fmt.Sprint(os.Getuid())
@@ -82,7 +82,7 @@ func runService(args []string) error {
 			return fmt.Errorf("launchctl bootstrap: %v: %s", err, strings.TrimSpace(string(out)))
 		}
 		_ = exec.Command("launchctl", "kickstart", "-k", target).Run()
-		fmt.Printf("installed %s\nbinary    %s\nlog       %s\n\nIt starts at login and restarts if it dies. `fleet service status` to check, `fleet info` for the address and token.\n", plistPath(), bin, filepath.Join(config.Dir(), "daemon.log"))
+		fmt.Printf("installed %s\nbinary    %s\nlog       %s\n\nIt starts at login and restarts if it dies. `keepty service status` to check, `keepty info` for the address and token.\n", plistPath(), bin, filepath.Join(config.Dir(), "daemon.log"))
 		return nil
 	case "uninstall":
 		_ = exec.Command("launchctl", "bootout", target).Run()
@@ -100,7 +100,7 @@ func runService(args []string) error {
 	case "status":
 		out, err := exec.Command("launchctl", "print", target).CombinedOutput()
 		if err != nil {
-			fmt.Println("not installed (fleet service install)")
+			fmt.Println("not installed (keepty service install)")
 			return nil
 		}
 		for _, line := range strings.Split(string(out), "\n") {

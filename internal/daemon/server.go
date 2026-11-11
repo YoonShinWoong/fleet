@@ -23,13 +23,13 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
-	"github.com/YoonShinWoong/fleet/internal/hooks"
-	"github.com/YoonShinWoong/fleet/internal/launch"
-	"github.com/YoonShinWoong/fleet/internal/state"
-	"github.com/YoonShinWoong/fleet/internal/terminal"
-	"github.com/YoonShinWoong/fleet/internal/version"
-	"github.com/YoonShinWoong/fleet/internal/workspace"
+	"github.com/YoonShinWoong/keepty/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/hooks"
+	"github.com/YoonShinWoong/keepty/internal/launch"
+	"github.com/YoonShinWoong/keepty/internal/state"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/version"
+	"github.com/YoonShinWoong/keepty/internal/workspace"
 )
 
 //go:embed web
@@ -137,7 +137,7 @@ func (s *Server) removeWorkspace(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ListenAndServe() error {
-	log.Printf("fleet %s listening on http://%s (config: %s)", version.Version, s.cfg.Addr, config.Path())
+	log.Printf("keepty %s listening on http://%s (config: %s)", version.Version, s.cfg.Addr, config.Path())
 	return s.srv.ListenAndServe()
 }
 

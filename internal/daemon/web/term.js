@@ -1,6 +1,6 @@
 const name = new URLSearchParams(location.search).get('name') || '';
 document.getElementById('name').textContent = name;
-document.title = `${name} · fleet`;
+document.title = `${name} · keepty`;
 const state = document.getElementById('state');
 const enc = new TextEncoder();
 
@@ -22,7 +22,7 @@ function connect() {
   ws.onopen = () => { state.textContent = 'live'; state.classList.add('on'); backoff = 500; term.focus(); };
   ws.onmessage = e => {
     if (e.data instanceof ArrayBuffer) { term.write(new Uint8Array(e.data)); return; }
-    try { const m = JSON.parse(e.data); if (m.t === 'exit') { term.write(`\r\n\x1b[2m[fleet] terminal exited (${m.code})\x1b[0m\r\n`); state.textContent = 'exited'; state.classList.remove('on'); ws.onclose = null; } } catch {}
+    try { const m = JSON.parse(e.data); if (m.t === 'exit') { term.write(`\r\n\x1b[2m[keepty] terminal exited (${m.code})\x1b[0m\r\n`); state.textContent = 'exited'; state.classList.remove('on'); ws.onclose = null; } } catch {}
   };
   ws.onclose = () => {
     state.textContent = 'reconnecting'; state.classList.remove('on');

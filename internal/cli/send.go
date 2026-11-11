@@ -8,7 +8,7 @@ import (
 
 func runSend(args []string) error {
 	if len(args) < 2 {
-		return errors.New("usage: fleet send <name> <text...>")
+		return errors.New("usage: keepty send <name> <text...>")
 	}
 	c, err := newClient()
 	if err != nil {

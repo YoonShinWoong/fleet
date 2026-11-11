@@ -20,7 +20,7 @@ const detachKey = 0x1c // Ctrl-\
 
 func runAttach(args []string) error {
 	if len(args) != 1 {
-		return errors.New("usage: fleet attach <name>")
+		return errors.New("usage: keepty attach <name>")
 	}
 	c, err := newClient()
 	if err != nil {
@@ -43,10 +43,10 @@ func attach(c *client, name string) error {
 	conn, resp, err := websocket.Dial(ctx, u, &websocket.DialOptions{HTTPHeader: c.header()})
 	if err != nil {
 		if resp != nil && resp.StatusCode == 404 {
-			return fmt.Errorf("no terminal named %q (see: fleet ls)", name)
+			return fmt.Errorf("no terminal named %q (see: keepty ls)", name)
 		}
 		if resp != nil && resp.StatusCode == 401 {
-			return errors.New("unauthorized: set FLEET_TOKEN to the daemon's token")
+			return errors.New("unauthorized: set KEEPTY_TOKEN to the daemon's token")
 		}
 		return fmt.Errorf("connect %s: %w", u, err)
 	}
@@ -59,7 +59,7 @@ func attach(c *client, name string) error {
 	}
 	restore := func() { _ = term.Restore(fd, old) }
 	defer restore()
-	fmt.Fprintf(os.Stdout, "\x1b[2m[fleet] attached to %s, detach with Ctrl-\\\x1b[0m\r\n", name)
+	fmt.Fprintf(os.Stdout, "\x1b[2m[keepty] attached to %s, detach with Ctrl-\\\x1b[0m\r\n", name)
 
 	winch := make(chan os.Signal, 1)
 	signal.Notify(winch, syscall.SIGWINCH)
@@ -121,6 +121,6 @@ func attach(c *client, name string) error {
 	if exitNote == "" {
 		exitNote = "detached, session keeps running"
 	}
-	fmt.Fprintf(os.Stdout, "\r\n\x1b[2m[fleet] %s\x1b[0m\r\n", strings.TrimSpace(exitNote))
+	fmt.Fprintf(os.Stdout, "\r\n\x1b[2m[keepty] %s\x1b[0m\r\n", strings.TrimSpace(exitNote))
 	return nil
 }

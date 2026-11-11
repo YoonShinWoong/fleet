@@ -20,10 +20,10 @@ jobs:
           mkdir -p dist
           for t in darwin/arm64 darwin/amd64 linux/arm64 linux/amd64; do
             GOOS=${t%/*} GOARCH=${t#*/} CGO_ENABLED=0 go build -trimpath \
-              -ldflags "-s -w -X github.com/YoonShinWoong/fleet/internal/version.Version=${GITHUB_REF_NAME}" \
-              -o "dist/fleet-${t%/*}-${t#*/}" ./cmd/fleet
+              -ldflags "-s -w -X github.com/YoonShinWoong/keepty/internal/version.Version=${GITHUB_REF_NAME}" \
+              -o "dist/keepty-${t%/*}-${t#*/}" ./cmd/keepty
           done
-          (cd dist && shasum -a 256 fleet-* > SHA256SUMS)
+          (cd dist && shasum -a 256 keepty-* > SHA256SUMS)
       - name: create release from CHANGELOG
         env:
           GH_TOKEN: ${{ github.token }}
@@ -61,5 +61,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           dmg=$(ls apps/desktop/src-tauri/target/release/bundle/dmg/*.dmg | head -1)
-          cp "$dmg" "fleet-desktop-${GITHUB_REF_NAME}-macos-arm64.dmg"
-          gh release upload "$GITHUB_REF_NAME" "fleet-desktop-${GITHUB_REF_NAME}-macos-arm64.dmg" --clobber
+          cp "$dmg" "keepty-desktop-${GITHUB_REF_NAME}-macos-arm64.dmg"
+          gh release upload "$GITHUB_REF_NAME" "keepty-desktop-${GITHUB_REF_NAME}-macos-arm64.dmg" --clobber

@@ -10,7 +10,7 @@ import (
 func runSearch(args []string) error {
 	q := strings.TrimSpace(strings.Join(args, " "))
 	if len([]rune(q)) < 2 {
-		return errors.New("usage: fleet search <text> (2+ characters)")
+		return errors.New("usage: keepty search <text> (2+ characters)")
 	}
 	c, err := newClient()
 	if err != nil {

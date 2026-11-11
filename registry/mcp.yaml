@@ -1,6 +1,6 @@
-# MCP 서버 정의 한 벌. v0.2의 `fleet mcp render`가 이 파일에서
+# MCP 서버 정의 한 벌. v0.2의 `keepty mcp render`가 이 파일에서
 # Claude user scope(~/.claude.json), Codex config.toml [mcp_servers], 레포 .mcp.json 을 생성한다.
-# 실제 목록은 레포 밖 ~/.fleet/mcp.yaml 에 두고, 이 파일은 형식 예시다.
+# 실제 목록은 레포 밖 ~/.keepty/mcp.yaml 에 두고, 이 파일은 형식 예시다.
 #
 # tags
 #   public    어디서든 닿는 SaaS 엔드포인트

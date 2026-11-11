@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "fleet",
+  "productName": "keepty",
   "version": "0.2.0",
-  "identifier": "dev.fleet.desktop",
+  "identifier": "dev.keepty.desktop",
   "build": {
     "frontendDist": "../src"
   },
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "fleet",
+        "title": "keepty",
         "url": "index.html",
         "width": 1280,
         "height": 820,

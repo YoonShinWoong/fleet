@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/YoonShinWoong/fleet/internal/launch"
+	"github.com/YoonShinWoong/keepty/internal/launch"
 )
 
 func runModel(args []string) error {
 	if len(args) != 2 {
-		return errors.New("usage: fleet model <terminal> <model>")
+		return errors.New("usage: keepty model <terminal> <model>")
 	}
 	c, err := newClient()
 	if err != nil {
@@ -32,7 +32,7 @@ func runHandoff(args []string) error {
 		return err
 	}
 	if len(pos) != 1 || *to == "" {
-		return errors.New("usage: fleet handoff <terminal> -to <agent> [-model m] [-name n] [-close] [-a]")
+		return errors.New("usage: keepty handoff <terminal> -to <agent> [-model m] [-name n] [-close] [-a]")
 	}
 	c, err := newClient()
 	if err != nil {
@@ -51,6 +51,6 @@ func runHandoff(args []string) error {
 	if *doAttach {
 		return attach(c, res.Term.Name)
 	}
-	fmt.Printf("attach with: fleet attach %s\n", res.Term.Name)
+	fmt.Printf("attach with: keepty attach %s\n", res.Term.Name)
 	return nil
 }

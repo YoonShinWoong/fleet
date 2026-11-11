@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
-	"github.com/YoonShinWoong/fleet/internal/terminal"
-	"github.com/YoonShinWoong/fleet/internal/workspace"
+	"github.com/YoonShinWoong/keepty/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/workspace"
 )
 
 func TestWorktreeWorkspaceAndShell(t *testing.T) {

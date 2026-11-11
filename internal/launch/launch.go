@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
-	"github.com/YoonShinWoong/fleet/internal/terminal"
-	"github.com/YoonShinWoong/fleet/internal/workspace"
+	"github.com/YoonShinWoong/keepty/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/workspace"
 )
 
 var nameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
@@ -215,7 +215,7 @@ func (l *Launcher) openIn(tg target, req OpenRequest) (terminal.Info, error) {
 	t, err := l.terms.Create(terminal.Options{
 		Name: name, Command: command, Cwd: tg.path, Shell: l.cfg.Shell, KeepShell: keepShell,
 		Size:  terminal.Size{Cols: req.Cols, Rows: req.Rows},
-		Env:   map[string]string{"FLEET_WORKSPACE": tg.ws, "FLEET_TASK": base, "FLEET_REPO": tg.repo, "FLEET_AGENT": agent, "FLEET_MODEL": req.Model},
+		Env:   map[string]string{"KEEPTY_WORKSPACE": tg.ws, "KEEPTY_TASK": base, "KEEPTY_REPO": tg.repo, "KEEPTY_AGENT": agent, "KEEPTY_MODEL": req.Model},
 		Agent: label, Task: base, Repo: tg.repo, Workspace: tg.ws, Model: req.Model,
 	})
 	if err != nil {
@@ -265,7 +265,7 @@ type HandoffResult struct {
 	Closed bool          `json:"closed"`
 }
 
-// Handoff writes what the source terminal was doing into <dir>/.fleet/handoff-*.md
+// Handoff writes what the source terminal was doing into <dir>/.keepty/handoff-*.md
 // and starts the target agent in the same place with a prompt pointing at it.
 func (l *Launcher) Handoff(req HandoffRequest) (HandoffResult, error) {
 	from, ok := l.terms.Get(req.From)
@@ -312,7 +312,7 @@ func agentLabel(info terminal.Info) string {
 }
 
 func writeHandoff(dir string, info terminal.Info, to string, scrollback []byte) (string, error) {
-	fdir := filepath.Join(dir, ".fleet")
+	fdir := filepath.Join(dir, ".keepty")
 	if err := os.MkdirAll(fdir, 0o755); err != nil {
 		return "", err
 	}
@@ -342,7 +342,7 @@ func writeHandoff(dir string, info terminal.Info, to string, scrollback []byte) 
 	return path, os.WriteFile(path, []byte(b.String()), 0o644)
 }
 
-// excludeFromGit keeps .fleet/ out of git status without touching .gitignore.
+// excludeFromGit keeps .keepty/ out of git status without touching .gitignore.
 func excludeFromGit(dir string) {
 	p, err := git(dir, "rev-parse", "--git-path", "info/exclude")
 	if err != nil || p == "" {
@@ -352,7 +352,7 @@ func excludeFromGit(dir string) {
 		p = filepath.Join(dir, p)
 	}
 	cur, _ := os.ReadFile(p)
-	if strings.Contains(string(cur), ".fleet/") {
+	if strings.Contains(string(cur), ".keepty/") {
 		return
 	}
 	_ = os.MkdirAll(filepath.Dir(p), 0o755)
@@ -364,7 +364,7 @@ func excludeFromGit(dir string) {
 	if len(cur) > 0 && cur[len(cur)-1] != '\n' {
 		_, _ = f.WriteString("\n")
 	}
-	_, _ = f.WriteString(".fleet/\n")
+	_, _ = f.WriteString(".keepty/\n")
 }
 
 func tail(s string, n int) string {

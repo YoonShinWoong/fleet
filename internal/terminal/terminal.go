@@ -254,7 +254,7 @@ func start(m *Manager, o Options) (*Term, error) {
 	env = setEnv(env, "TERM", "xterm-256color")
 	env = setEnv(env, "COLORTERM", "truecolor")
 	env = setEnv(env, "SHELL", shell)
-	env = setEnv(env, "FLEET_TERM", o.Name)
+	env = setEnv(env, "KEEPTY_TERM", o.Name)
 	keys := make([]string, 0, len(o.Env))
 	for k := range o.Env {
 		keys = append(keys, k)

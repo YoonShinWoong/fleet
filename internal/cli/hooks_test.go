@@ -8,7 +8,7 @@ import (
 func TestMergeHooksKeepsExistingAndIsIdempotent(t *testing.T) {
 	var doc map[string]any
 	_ = json.Unmarshal([]byte(`{"model":"fable","hooks":{"Stop":[{"hooks":[{"type":"command","command":"orca-hook.sh"}]}]}}`), &doc)
-	n := mergeHooks(doc, []string{"Stop", "SessionStart"}, "/usr/local/bin/fleet hook claude")
+	n := mergeHooks(doc, []string{"Stop", "SessionStart"}, "/usr/local/bin/keepty hook claude")
 	if n != 2 {
 		t.Fatalf("added %d", n)
 	}
@@ -19,7 +19,7 @@ func TestMergeHooksKeepsExistingAndIsIdempotent(t *testing.T) {
 	if doc["model"] != "fable" {
 		t.Fatal("other settings must survive")
 	}
-	if again := mergeHooks(doc, []string{"Stop", "SessionStart"}, "/usr/local/bin/fleet hook claude"); again != 0 {
+	if again := mergeHooks(doc, []string{"Stop", "SessionStart"}, "/usr/local/bin/keepty hook claude"); again != 0 {
 		t.Fatalf("second merge added %d", again)
 	}
 }

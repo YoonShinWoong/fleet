@@ -5,7 +5,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/YoonShinWoong/fleet/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
 )
 
 func runSh(args []string) error {
@@ -18,7 +18,7 @@ func runSh(args []string) error {
 		return err
 	}
 	if len(pos) != 1 {
-		return errors.New("usage: fleet sh <name> [-cwd dir] [-c command] [-d]")
+		return errors.New("usage: keepty sh <name> [-cwd dir] [-c command] [-d]")
 	}
 	name := pos[0]
 	if *cwd == "" {

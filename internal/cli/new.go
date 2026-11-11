@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/YoonShinWoong/fleet/internal/launch"
+	"github.com/YoonShinWoong/keepty/internal/launch"
 )
 
 func runNew(args []string) error {
@@ -18,7 +18,7 @@ func runNew(args []string) error {
 		return err
 	}
 	if len(pos) != 2 {
-		return errors.New("usage: fleet new <repo> <task> [-agent claude|codex] [-a]")
+		return errors.New("usage: keepty new <repo> <task> [-agent claude|codex] [-a]")
 	}
 	repo, task := pos[0], pos[1]
 	c, err := newClient()
@@ -38,6 +38,6 @@ func runNew(args []string) error {
 	if *doAttach {
 		return attach(c, res.Term)
 	}
-	fmt.Printf("\nattach with: fleet attach %s\n", res.Term)
+	fmt.Printf("\nattach with: keepty attach %s\n", res.Term)
 	return nil
 }

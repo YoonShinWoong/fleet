@@ -6,8 +6,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/YoonShinWoong/fleet/internal/state"
-	"github.com/YoonShinWoong/fleet/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/state"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
 )
 
 func runLs(args []string) error {

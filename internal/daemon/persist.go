@@ -12,12 +12,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
-	"github.com/YoonShinWoong/fleet/internal/state"
-	"github.com/YoonShinWoong/fleet/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/state"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
 )
 
-// savedTerm is one line of ~/.fleet/terminals.json: enough to bring a terminal
+// savedTerm is one line of ~/.keepty/terminals.json: enough to bring a terminal
 // back after the daemon restarts. Agents come back on their own session via the
 // agent's resumeCommand; shells come back fresh with their last output shown.
 type savedTerm struct {
@@ -101,19 +101,19 @@ func (s *Server) restore() {
 			opts.Shell = s.cfg.Shell
 		}
 		var banner strings.Builder
-		fmt.Fprintf(&banner, "\x1b[2m[fleet] restored after a daemon restart (saved %s)\x1b[0m\r\n", st.SavedAt.Format("15:04:05"))
+		fmt.Fprintf(&banner, "\x1b[2m[keepty] restored after a daemon restart (saved %s)\x1b[0m\r\n", st.SavedAt.Format("15:04:05"))
 		how := "shell"
 		switch {
 		case st.Agent != "" && st.SessionID != "" && s.cfg.Agents[st.Agent].ResumeCommand != "":
 			opts.Command = strings.ReplaceAll(s.cfg.Agents[st.Agent].ResumeCommand, "{session}", terminal.ShellQuote(st.SessionID))
 			opts.KeepShell = true
 			how = "resume " + st.Agent + " " + short(st.SessionID)
-			fmt.Fprintf(&banner, "\x1b[2m[fleet] resuming %s session %s\x1b[0m\r\n", st.Agent, short(st.SessionID))
+			fmt.Fprintf(&banner, "\x1b[2m[keepty] resuming %s session %s\x1b[0m\r\n", st.Agent, short(st.SessionID))
 		case st.Agent != "":
 			opts.Command = st.Command
 			opts.KeepShell = true
 			how = "restart " + st.Agent + " (no session id)"
-			fmt.Fprintf(&banner, "\x1b[2m[fleet] no session id was recorded for %s; starting it fresh\x1b[0m\r\n", st.Agent)
+			fmt.Fprintf(&banner, "\x1b[2m[keepty] no session id was recorded for %s; starting it fresh\x1b[0m\r\n", st.Agent)
 		default:
 			opts.Command = ""
 		}

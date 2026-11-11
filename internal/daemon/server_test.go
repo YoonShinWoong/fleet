@@ -13,14 +13,14 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/YoonShinWoong/fleet/internal/config"
-	"github.com/YoonShinWoong/fleet/internal/state"
-	"github.com/YoonShinWoong/fleet/internal/terminal"
+	"github.com/YoonShinWoong/keepty/internal/config"
+	"github.com/YoonShinWoong/keepty/internal/state"
+	"github.com/YoonShinWoong/keepty/internal/terminal"
 )
 
 func newTestServer(t *testing.T) (*Server, *httptest.Server) {
 	t.Helper()
-	t.Setenv("FLEET_HOME", t.TempDir())
+	t.Setenv("KEEPTY_HOME", t.TempDir())
 	cfg := config.Default()
 	cfg.Shell = "/bin/sh"
 	store, err := state.Open(filepath.Join(t.TempDir(), "state.json"))
@@ -113,7 +113,7 @@ func TestHookEventBindsToTerminal(t *testing.T) {
 }
 
 func TestAuthOnlyOffLoopback(t *testing.T) {
-	t.Setenv("FLEET_HOME", t.TempDir())
+	t.Setenv("KEEPTY_HOME", t.TempDir())
 	cfg := config.Default()
 	cfg.Token = "secret"
 	store, _ := state.Open(filepath.Join(t.TempDir(), "state.json"))
@@ -210,7 +210,7 @@ func TestSearchScrollback(t *testing.T) {
 }
 
 func TestAuthBehindLocalProxy(t *testing.T) {
-	t.Setenv("FLEET_HOME", t.TempDir())
+	t.Setenv("KEEPTY_HOME", t.TempDir())
 	cfg := config.Default()
 	cfg.Token = "secret"
 	store, _ := state.Open(filepath.Join(t.TempDir(), "state.json"))
@@ -236,7 +236,7 @@ func TestAuthBehindLocalProxy(t *testing.T) {
 
 func TestPersistAndRestore(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("FLEET_HOME", home)
+	t.Setenv("KEEPTY_HOME", home)
 	cfg := config.Default()
 	cfg.Shell = "/bin/sh"
 	cfg.Agents["printer"] = config.Agent{Command: "printf 'fresh\n'", ResumeCommand: "printf 'resumed %s\n' {session}"}

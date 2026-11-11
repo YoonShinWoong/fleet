@@ -1,4 +1,4 @@
-// Renders the fleet icon (rounded square, three bars) as a 1024px PNG.
+// Renders the keepty icon (rounded square, three bars) as a 1024px PNG.
 package main
 
 import (

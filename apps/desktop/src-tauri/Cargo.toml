@@ -1,12 +1,12 @@
 [package]
-name = "fleet-desktop"
+name = "keepty-desktop"
 version = "0.2.0"
-description = "fleet desktop: a menu bar shell around the fleet web app"
+description = "keepty desktop: a menu bar shell around the keepty web app"
 edition = "2021"
 license = "MIT"
 
 [lib]
-name = "fleet_desktop_lib"
+name = "keepty_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
