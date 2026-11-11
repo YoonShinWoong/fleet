@@ -52,14 +52,15 @@ func runHooks(args []string) error {
 			return fmt.Errorf("%s is not valid JSON: %w", path, err)
 		}
 	}
+	removed := removeLegacyHooks(doc)
 	added := mergeHooks(doc, events, command)
 	out, _ := json.MarshalIndent(doc, "", "  ")
 	if args[0] == "show" {
-		fmt.Printf("would write %s (%d event(s) to add)\n", path, added)
+		fmt.Printf("would write %s (%d event(s) to add, %d old fleet hook(s) to remove)\n", path, added, removed)
 		fmt.Println(string(out))
 		return nil
 	}
-	if added == 0 {
+	if added == 0 && removed == 0 {
 		fmt.Printf("%s already has keepty hooks for every event\n", path)
 		return nil
 	}
@@ -72,7 +73,7 @@ func runHooks(args []string) error {
 	if err := os.WriteFile(path, append(out, '\n'), 0o600); err != nil {
 		return err
 	}
-	fmt.Printf("wrote %s (+%d event(s); backup at %s.bak-keepty)\n", path, added, path)
+	fmt.Printf("wrote %s (+%d event(s), -%d old fleet hook(s); backup at %s.bak-keepty)\n", path, added, removed, path)
 	if agent == "codex" {
 		fmt.Println("Codex asks you to trust new hooks the first time it starts; answer yes once.")
 	}
@@ -100,6 +101,61 @@ func mergeHooks(doc map[string]any, events []string, command string) int {
 		added++
 	}
 	return added
+}
+
+// removeLegacyHooks drops entries left by the former name, which fail with
+// "command not found" on every event once the fleet binary is gone.
+func removeLegacyHooks(doc map[string]any) int {
+	hooks, _ := doc["hooks"].(map[string]any)
+	removed := 0
+	for ev, v := range hooks {
+		groups, ok := v.([]any)
+		if !ok {
+			continue
+		}
+		before := removed
+		var keptGroups []any
+		for _, g := range groups {
+			gm, ok := g.(map[string]any)
+			inner, _ := gm["hooks"].([]any)
+			if !ok || len(inner) == 0 {
+				keptGroups = append(keptGroups, g)
+				continue
+			}
+			var keptInner []any
+			for _, h := range inner {
+				hm, _ := h.(map[string]any)
+				if cmd, _ := hm["command"].(string); isLegacyHook(cmd) {
+					removed++
+					continue
+				}
+				keptInner = append(keptInner, h)
+			}
+			if len(keptInner) > 0 {
+				gm["hooks"] = keptInner
+				keptGroups = append(keptGroups, gm)
+			}
+		}
+		if removed == before {
+			continue
+		}
+		if len(keptGroups) == 0 {
+			delete(hooks, ev)
+		} else {
+			hooks[ev] = keptGroups
+		}
+	}
+	return removed
+}
+
+func isLegacyHook(cmd string) bool {
+	for _, agent := range []string{"claude", "codex"} {
+		s := "fleet hook " + agent
+		if cmd == s || strings.HasSuffix(cmd, "/"+s) {
+			return true
+		}
+	}
+	return false
 }
 
 func hasKeeptyHook(groups []any) bool {
