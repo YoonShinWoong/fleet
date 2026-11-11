@@ -4,9 +4,24 @@
 
 ## Unreleased
 
+## v0.4.0 (2026-11-11)
+
 ### Changed
-- 이름을 fleet에서 keepty로 바꿈. 레포와 Go 모듈 `github.com/YoonShinWoong/keepty`, 명령 `keepty`, 환경변수 `KEEPTY_*`, 설정 폴더 `~/.keepty`, 레포별 `.keepty/`, launchd `dev.keepty.daemon`, 데스크톱 앱 `dev.keepty.desktop`. 예전 이름은 읽지 않는다.
-- 기존 설치 옮기기: `fleet service uninstall`, `mv ~/.fleet ~/.keepty`, 새 바이너리를 `~/.local/bin/keepty`에 두고 `keepty service install`, `keepty hooks install claude`(codex도), 에이전트 훅 설정에 남은 `fleet hook` 항목 삭제, 다른 기기의 `FLEET_*` 환경변수를 `KEEPTY_*`로. 웹 앱과 데스크톱 앱은 저장 키가 바뀌어 토큰을 한 번 다시 넣는다.
+- 이름을 fleet에서 keepty로 바꿈. 레포와 Go 모듈 `github.com/YoonShinWoong/keepty`, 명령 `keepty`, 환경변수 `KEEPTY_*`, 설정 폴더 `~/.keepty`, 레포별 `.keepty/`, launchd `dev.keepty.daemon`, 데스크톱 앱 `dev.keepty.desktop`. 예전 이름의 설정과 환경변수는 읽지 않는다.
+- 데스크톱 앱 전역 단축키를 ⌥⌘F에서 ⌥⌘K로. ⌥⌘F는 VS Code의 바꾸기와 겹쳤다.
+
+### Fixed
+- `keepty hooks install`이 예전 이름의 `fleet hook` 항목을 지운다. fleet 바이너리가 없어진 뒤 이벤트마다 command not found가 나지 않는다.
+- 폰 화면에서 마지막 메시지가 길면 터미널 목록이 화면보다 넓어져 배지와 버튼이 잘리던 것.
+- 아이콘 생성 도구 `go.mod`의 `go 1.23`을 `go 1.23.0`으로. 낮은 Go에서 툴체인을 받지 못했다.
+
+### 기존 설치 옮기기
+1. `fleet service uninstall`, `mv ~/.fleet ~/.keepty`
+2. 새 바이너리를 `~/.local/bin/keepty`에 두고 `keepty service install`
+3. `keepty hooks install claude`, `keepty hooks install codex`. 남은 `fleet hook` 항목은 이때 지워진다.
+4. 다른 기기의 `FLEET_*` 환경변수를 `KEEPTY_*`로. 웹 앱과 데스크톱 앱은 저장 키가 바뀌어 토큰을 한 번 다시 넣는다.
+
+`config.json`에 적힌 `worktreeRoot`(`~/fleet/worktrees`)는 그대로 둔다. git worktree가 그 경로에 묶여 있어 폴더를 옮기면 끊긴다.
 
 ## v0.3.0 (2026-11-08)
 
